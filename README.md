@@ -1,2 +1,1 @@
-# hardServer
-server for hard
+Cервер для тестового проекта на React (content_site)
