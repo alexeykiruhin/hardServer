@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user, login_required
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 import mongo
 
@@ -137,26 +137,22 @@ def register():
 # обработка запроса на авторизацию пользователя
 @app.route('/login', methods=['POST'])
 def login():
-    username = request.json.get('username')
-    password = request.json.get('password')
+    # получаем данные из запроса
+    data = request.json
+    # ищем пользователя в базе данных
+    user = users_collection.find_one({'username': data['username']}, {'_id': 0})
+    # проверяем пароль
+    if user['password'] == data['password']:
+        # создаем токен
+        # token = create_access_token(identity=user['id'])
+        # кастылём удаляю пароль из ответа
+        del user['password']
+        # возвращаем токен
+        # return jsonify({'access_token': token})
+        return jsonify({'user_obj': user, 'isAuth': True})
 
-    if not username or not password:
-        return jsonify({'error': 'Missing username or password'})
-
-    # проверяем, что пользователь существует и введенный пароль верный
-    for user in users.values():
-        if user['username'] == username and user['password'] == password:
-            id = user['id']
-            username = user['username']
-            img = user['img']
-            password = user['password']
-            user_obj = User(id, username, password, img)
-            login_user(user_obj)
-            print(user_obj.get_info())
-            # login: 0 ошибок нет
-            return jsonify({'user_obj': user_obj.get_info(), 'isAuth': user_obj.is_authenticated()})
-
-    return jsonify({'error': 'Invalid username or password'})
+    # возвращаем ошибку
+    return jsonify({'message': 'Invalid username or password'}), 401
 
 
 # обработка запроса на выход из системы
@@ -191,7 +187,7 @@ def get_posts():
 @app.route('/users', methods=['GET', 'OPTIONS'])
 def get_users():
     users_list = []
-    for user in users_collection.find({}, {'_id': 0}):
+    for user in users_collection.find({}, {'_id': 0, 'password': 0}):
         users_list.append(user)
     response = jsonify({'users': users_list, 'count': len(users)})
     return response
@@ -199,9 +195,8 @@ def get_users():
 
 @app.route('/user/<int:user_id>', methods=['GET', 'OPTIONS'])
 def get_user(user_id):
-    users_list = list(users.values())
-    response = jsonify({'user': users_list[user_id - 1]})
-    print(response)
+    response = users_collection.find_one({'id': user_id}, {'_id': 0, 'password': 0})
+    # response = jsonify({'user': user})
     return response
 
 
