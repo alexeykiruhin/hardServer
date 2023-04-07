@@ -1,9 +1,11 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user, login_required
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 CORS(app, resources={r"/posts": {"origins": "*"}})
+app.secret_key = 'secret'
 
 # имитация базы данных пользователей
 users = {
@@ -74,7 +76,29 @@ login_manager.init_app(app)
 
 # реализация класса пользователя
 class User(UserMixin):
-    pass
+    def __init__(self, id, username, password, img):
+        self.id = id
+        self.username = username
+        self.img = img
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    def is_authenticated(self):
+        return True
+
+    def is_active(self):
+        return True
+
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return str(self.id)
+
+    def get_info(self):
+        return {'username': self.username, 'img': self.img}
 
 
 # реализация функции для получения пользователя по его id
@@ -117,10 +141,15 @@ def login():
     # проверяем, что пользователь существует и введенный пароль верный
     for user in users.values():
         if user['username'] == username and user['password'] == password:
-            user_obj = User()
-            user_obj.id = user['id']
+            id = user['id']
+            username = user['username']
+            img = user['img']
+            password = user['password']
+            user_obj = User(id, username, password, img)
             login_user(user_obj)
-            return jsonify({'message': 'User logged in successfully'})
+            print(user_obj.get_info())
+            # login: 0 ошибок нет
+            return jsonify({'user_obj': user_obj.get_info(), 'isAuth': user_obj.is_authenticated()})
 
     return jsonify({'error': 'Invalid username or password'})
 
