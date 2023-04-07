@@ -2,6 +2,11 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
+import mongo
+
+# переменные из файла mongo.py
+users_collection = mongo.users
+posts_collection = mongo.posts
 
 app = Flask(__name__)
 CORS(app, resources={r"/posts": {"origins": "*"}})
@@ -10,12 +15,12 @@ app.secret_key = 'secret'
 # имитация базы данных пользователей
 users = {
     1: {'id': 1, 'username': 'Alice', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/women/69.jpg'},
-    2: {'id': 2, 'username': 'Dave', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/women/74.jpg'},
+    2: {'id': 2, 'username': 'Dave', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/74.jpg'},
     3: {'id': 3, 'username': 'Bob', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/11.jpg'},
-    4: {'id': 4, 'username': 'Ivan', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/women/55.jpg'},
+    4: {'id': 4, 'username': 'Ivan', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/25.jpg'},
     5: {'id': 5, 'username': 'user5', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/women/20.jpg'},
     6: {'id': 6, 'username': 'user6', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/women/84.jpg'},
-    7: {'id': 7, 'username': 'user7', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/84.jpg'},
+    7: {'id': 7, 'username': 'user7', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/13.jpg'},
     8: {'id': 8, 'username': 'user8', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/8.jpg'},
     9: {'id': 9, 'username': 'user9', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/17.jpg'},
     10: {'id': 10, 'username': 'user10', 'password': 'password1',
@@ -185,9 +190,10 @@ def get_posts():
 
 @app.route('/users', methods=['GET', 'OPTIONS'])
 def get_users():
-    users_list = list(users.values())
+    users_list = []
+    for user in users_collection.find({}, {'_id': 0}):
+        users_list.append(user)
     response = jsonify({'users': users_list, 'count': len(users)})
-    print(response)
     return response
 
 
