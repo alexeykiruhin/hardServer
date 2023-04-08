@@ -13,59 +13,59 @@ CORS(app, resources={r"/posts": {"origins": "*"}})
 app.secret_key = 'secret'
 
 # имитация базы данных пользователей
-users = {
-    1: {'id': 1, 'username': 'Alice', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/women/69.jpg'},
-    2: {'id': 2, 'username': 'Dave', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/74.jpg'},
-    3: {'id': 3, 'username': 'Bob', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/11.jpg'},
-    4: {'id': 4, 'username': 'Ivan', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/25.jpg'},
-    5: {'id': 5, 'username': 'user5', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/women/20.jpg'},
-    6: {'id': 6, 'username': 'user6', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/women/84.jpg'},
-    7: {'id': 7, 'username': 'user7', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/13.jpg'},
-    8: {'id': 8, 'username': 'user8', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/8.jpg'},
-    9: {'id': 9, 'username': 'user9', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/17.jpg'},
-    10: {'id': 10, 'username': 'user10', 'password': 'password1',
-     'img': 'https://randomuser.me/api/portraits/women/84.jpg'},
-    11: {'id': 11, 'username': 'user11', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/31.jpg'},
-    12: {'id': 12, 'username': 'user12', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/93.jpg'},
-    13: {'id': 13, 'username': 'user13', 'password': 'password1',
-     'img': 'https://randomuser.me/api/portraits/women/92.jpg'},
-    14: {'id': 14, 'username': 'user14', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/61.jpg'},
-    15: {'id': 15, 'username': 'user15', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/11.jpg'},
-    16: {'id': 16, 'username': 'user16', 'password': 'password1',
-     'img': 'https://randomuser.me/api/portraits/women/18.jpg'},
-    17: {'id': 17, 'username': 'user17', 'password': 'password1',
-     'img': 'https://randomuser.me/api/portraits/women/25.jpg'},
-    18: {'id': 18, 'username': 'user18', 'password': 'password1',
-     'img': 'https://randomuser.me/api/portraits/women/77.jpg'},
-    19: {'id': 19, 'username': 'user19', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/89.jpg'},
-    20: {'id': 20, 'username': 'user20', 'password': 'password1',
-     'img': 'https://randomuser.me/api/portraits/women/98.jpg'}
-}
-
-posts = [
-    {"id": 1, "userId": users[1]['id'], "nameUser": "Alice",
-     "textPost": "Интересные у тебя татуировки на ногах. Что они означают? Это варикоз."},
-    {"id": 2, "userId": users[2]['id'], "nameUser": "Dave",
-     "textPost": "Сегодня я настолько ленив, что мои сны уже имеют субтитры."},
-    {"id": 3, "userId": users[3]['id'], "nameUser": "Bob",
-     "textPost": "Если ты думаешь, что никогда не совершал глупых поступков, то ты просто не обращал на них внимания."},
-    {"id": 4, "userId": users[4]['id'], "nameUser": "Ivan",
-     "textPost": "Женщины не стареют, они просто переходят на другой уровень!"},
-    {"id": 5, "userId": users[5]['id'], "nameUser": "user5",
-     "textPost": "Если ты думаешь, что всё уже позади, то скорее всего ты идёшь задом наперёд."},
-    {"id": 6, "userId": users[6]['id'], "nameUser": "Bob",
-     "textPost": "Если бы я был денежным знаком, то я был бы знаком вопросительным, потому что жизнь полна неожиданных поворотов."},
-    {"id": 7, "userId": users[7]['id'], "nameUser": "Julia",
-     "textPost": "Я не ленивый, я просто экономлю энергию на важные вещи."},
-    {"id": 8, "userId": users[8]['id'], "nameUser": "Dave",
-     "textPost": "Все люди делятся на две категории: те, кто могут делать математические вычисления, и те, кто не могут."},
-    {"id": 9, "userId": users[9]['id'], "nameUser": "user9",
-     "textPost": "Будущее близко, но в прошлое можно вернуться с помощью гугла."},
-    {"id": 10, "userId": users[10]['id'], "nameUser": "user10",
-     "textPost": "Я не знаю, какие планы на сегодня у других, но у меня есть важное свидание с моей постелью."},
-    {"id": 11, "userId": users[11]['id'], "nameUser": "user11",
-     "textPost": "Мне кажется, что кто-то где-то смотрит на меня и думает: «Ну вот идиот…»."},
-]
+# users = {
+#     1: {'id': 1, 'username': 'Alice', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/women/69.jpg'},
+#     2: {'id': 2, 'username': 'Dave', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/74.jpg'},
+#     3: {'id': 3, 'username': 'Bob', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/11.jpg'},
+#     4: {'id': 4, 'username': 'Ivan', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/25.jpg'},
+#     5: {'id': 5, 'username': 'user5', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/women/20.jpg'},
+#     6: {'id': 6, 'username': 'user6', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/women/84.jpg'},
+#     7: {'id': 7, 'username': 'user7', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/13.jpg'},
+#     8: {'id': 8, 'username': 'user8', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/8.jpg'},
+#     9: {'id': 9, 'username': 'user9', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/17.jpg'},
+#     10: {'id': 10, 'username': 'user10', 'password': 'password1',
+#      'img': 'https://randomuser.me/api/portraits/women/84.jpg'},
+#     11: {'id': 11, 'username': 'user11', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/31.jpg'},
+#     12: {'id': 12, 'username': 'user12', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/93.jpg'},
+#     13: {'id': 13, 'username': 'user13', 'password': 'password1',
+#      'img': 'https://randomuser.me/api/portraits/women/92.jpg'},
+#     14: {'id': 14, 'username': 'user14', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/61.jpg'},
+#     15: {'id': 15, 'username': 'user15', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/11.jpg'},
+#     16: {'id': 16, 'username': 'user16', 'password': 'password1',
+#      'img': 'https://randomuser.me/api/portraits/women/18.jpg'},
+#     17: {'id': 17, 'username': 'user17', 'password': 'password1',
+#      'img': 'https://randomuser.me/api/portraits/women/25.jpg'},
+#     18: {'id': 18, 'username': 'user18', 'password': 'password1',
+#      'img': 'https://randomuser.me/api/portraits/women/77.jpg'},
+#     19: {'id': 19, 'username': 'user19', 'password': 'password1', 'img': 'https://randomuser.me/api/portraits/men/89.jpg'},
+#     20: {'id': 20, 'username': 'user20', 'password': 'password1',
+#      'img': 'https://randomuser.me/api/portraits/women/98.jpg'}
+# }
+#
+# posts = [
+#     {"id": 1, "userId": users[1]['id'], "nameUser": "Alice",
+#      "textPost": "Интересные у тебя татуировки на ногах. Что они означают? Это варикоз."},
+#     {"id": 2, "userId": users[2]['id'], "nameUser": "Dave",
+#      "textPost": "Сегодня я настолько ленив, что мои сны уже имеют субтитры."},
+#     {"id": 3, "userId": users[3]['id'], "nameUser": "Bob",
+#      "textPost": "Если ты думаешь, что никогда не совершал глупых поступков, то ты просто не обращал на них внимания."},
+#     {"id": 4, "userId": users[4]['id'], "nameUser": "Ivan",
+#      "textPost": "Женщины не стареют, они просто переходят на другой уровень!"},
+#     {"id": 5, "userId": users[5]['id'], "nameUser": "user5",
+#      "textPost": "Если ты думаешь, что всё уже позади, то скорее всего ты идёшь задом наперёд."},
+#     {"id": 6, "userId": users[6]['id'], "nameUser": "Bob",
+#      "textPost": "Если бы я был денежным знаком, то я был бы знаком вопросительным, потому что жизнь полна неожиданных поворотов."},
+#     {"id": 7, "userId": users[7]['id'], "nameUser": "Julia",
+#      "textPost": "Я не ленивый, я просто экономлю энергию на важные вещи."},
+#     {"id": 8, "userId": users[8]['id'], "nameUser": "Dave",
+#      "textPost": "Все люди делятся на две категории: те, кто могут делать математические вычисления, и те, кто не могут."},
+#     {"id": 9, "userId": users[9]['id'], "nameUser": "user9",
+#      "textPost": "Будущее близко, но в прошлое можно вернуться с помощью гугла."},
+#     {"id": 10, "userId": users[10]['id'], "nameUser": "user10",
+#      "textPost": "Я не знаю, какие планы на сегодня у других, но у меня есть важное свидание с моей постелью."},
+#     {"id": 11, "userId": users[11]['id'], "nameUser": "user11",
+#      "textPost": "Мне кажется, что кто-то где-то смотрит на меня и думает: «Ну вот идиот…»."},
+# ]
 
 # инициализация LoginManager
 login_manager = LoginManager()
@@ -170,18 +170,85 @@ def protected():
     return jsonify({'message': 'You are authorized!'})
 
 
+# получение постов
 @app.route('/posts', methods=['GET', 'OPTIONS'])
 def get_posts():
-    print(request.args.get('page'))
-    page_number = int(request.args.get('page', 1))
-    # бработка ошибки передачи параметра page=1
-    if page_number == 0:
-        page_number = 1
-    page_size = 2
-    start = (page_number - 1) * page_size
-    end = start + page_size
-    response = jsonify({'posts': posts[start:end], 'count': len(posts)})
-    return response
+    page = int(request.args.get('page', 1))
+    page_size = int(request.args.get('page_size', 2))
+
+    # операция агрегации
+    pipeline = [
+        # поиск всех постов с информацией об авторе
+        {
+            '$lookup': {
+                'from': 'users',
+                'localField': 'author',
+                'foreignField': '_id',
+                'as': 'author'
+            }
+        },
+        # объединение данных о посте и авторе
+        {
+            '$unwind': '$author'
+        },
+        # сортировка по дате создания в порядке убывания
+        {
+            '$sort': {
+                'created_at': -1
+            }
+        },
+        # пропуск документов для реализации пагинации
+        {
+            '$skip': (page - 1) * page_size
+        },
+        # ограничение количества выдаваемых документов
+        {
+            '$limit': page_size
+        },
+        # исключение поля "_id" из документа автора
+        {
+            '$project': {
+                'text': 1,
+                'rating': 1,
+                'author.username': 1,
+                'author.img': 1,
+                'author.id': 1,
+                '_id': 0
+            }
+        }
+    ]
+
+    # выполнение операции агрегации
+    result = posts_collection.aggregate(pipeline)
+    count = posts_collection.count_documents({})
+    print(count)
+    posts = [post for post in result]
+    print(posts)
+    return jsonify({'posts': posts, 'count': count})
+
+
+# добавление поста
+@app.route('/posts', methods=['POST'])
+def add_post():
+    post_data = request.json
+    author_id = post_data['author_id']
+    post_text = post_data['text']
+
+    # получаем автора поста из коллекции users
+    author = users_collection.find_one({'_id': author_id})
+
+    # создаем новый документ в коллекции posts
+    new_post = {
+        'text': post_text,
+        'author': {
+            '_id': author['_id'],
+            'username': author['username']
+        }
+    }
+    result = posts_collection.insert_one(new_post)
+
+    # возвращаем id добавленного поста
+    return jsonify({'id': str(result.inserted_id)})
 
 
 @app.route('/users', methods=['GET', 'OPTIONS'])
@@ -189,7 +256,8 @@ def get_users():
     users_list = []
     for user in users_collection.find({}, {'_id': 0, 'password': 0}):
         users_list.append(user)
-    response = jsonify({'users': users_list, 'count': len(users)})
+    count = users_collection.count_documents({})
+    response = jsonify({'users': users_list, 'count': count})
     return response
 
 
