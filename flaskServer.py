@@ -221,9 +221,7 @@ def get_posts():
     # выполнение операции агрегации
     result = posts_collection.aggregate(pipeline)
     count = posts_collection.count_documents({})
-    print(count)
     posts = [post for post in result]
-    print(posts)
     return jsonify({'posts': posts, 'count': count})
 
 
@@ -263,8 +261,39 @@ def get_users():
 
 @app.route('/user/<int:user_id>', methods=['GET', 'OPTIONS'])
 def get_user(user_id):
-    response = users_collection.find_one({'id': user_id}, {'_id': 0, 'password': 0})
-    # response = jsonify({'user': user})
+    user_info = users_collection.find_one({'id': user_id}, {'_id': 0, 'password': 0})
+    user_posts = posts_collection.aggregate([
+        {
+            '$lookup':
+                {
+                    'from': "users",
+                    'localField': "author",
+                    'foreignField': "_id",
+                    'as': "author_info"
+                }
+        },
+        {
+            '$match': {
+                "author_info.id": user_id
+            }
+        },
+        # исключение полей
+        {
+            '$project': {
+                'text': 1,
+                # 'rating': 1,
+                '_id': 0
+            }
+        }
+    ])
+    # создаём список из объекта бд
+    user_posts = list(user_posts)
+    # вычисляем и записываем количество постов в информацию о юзере
+    user_info['posts_count'] = len(user_posts)
+    # преобразовываем объект бд в список постов
+    user_posts = [txt['text'] for txt in user_posts]
+    response = jsonify({'user_info': user_info, 'user_posts': user_posts})
+
     return response
 
 
