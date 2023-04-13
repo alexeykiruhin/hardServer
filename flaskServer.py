@@ -10,7 +10,7 @@ users_collection = mongo.users
 posts_collection = mongo.posts
 
 app = Flask(__name__)
-CORS(app, resources={r"/posts": {"origins": "*"}})
+CORS(app, supports_credentials=True)
 app.secret_key = 'secret'
 app.config['JWT_SECRET_KEY'] = '23sa3501080X'  # задаем секретный ключ для подписи токена
 
@@ -103,11 +103,12 @@ def login():
         token = create_access_token(identity=user['id'])
         print(token)
         # кастылём удаляю пароль из ответа
+        del user['username']
         del user['password']
         # возвращаем токен
         # return jsonify({'access_token': token})
-        response = jsonify({'user_obj': user, 'isAuth': True})
-        response.set_cookie('access-token', token, httponly=True)
+        response = jsonify({'user_obj': user, 'isAuth': True})  # для теста ставим false
+        response.set_cookie('access-token', token, samesite='None', httponly=True, secure=False)
         return response
 
     # возвращаем ошибку
@@ -224,7 +225,6 @@ def get_user(user_id):
     # получение идентификатора пользователя из токена
     # current_user_id = get_jwt_identity()
     # print(current_user_id)
-
     user_info = users_collection.find_one({'id': user_id}, {'_id': 0, 'password': 0})
     user_posts = posts_collection.aggregate([
         {
@@ -257,13 +257,25 @@ def get_user(user_id):
     # преобразовываем объект бд в список постов
     user_posts = [txt['text'] for txt in user_posts]
     response = jsonify({'user_info': user_info, 'user_posts': user_posts})
+    return response
 
+
+@app.route('/user/<int:user_id>', methods=['POST', 'OPTIONS'])
+# @jwt_required()  # использование декоратора для проверки токена
+def upd_user(user_id):
+    # получаем данные из запроса
+    data = request.json
+    status_text = data['statusText']
+    print(f'status_text - {status_text}')
+    print(f'userId - {user_id}')
+    users_collection.update_one({'id': user_id}, {'$set': {'statusText': status_text}})
+    response = jsonify('OK')
     return response
 
 
 @app.after_request
 def add_cors_headers(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3001')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
     response.headers.add('Access-Control-Allow-Credentials', 'true')
