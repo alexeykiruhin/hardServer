@@ -103,7 +103,6 @@ def login():
         token = create_access_token(identity=user['id'])
         print(token)
         # кастылём удаляю пароль из ответа
-        del user['username']
         del user['password']
         # возвращаем токен
         # return jsonify({'access_token': token})
@@ -269,13 +268,13 @@ def upd_user(user_id):
     print(f'status_text - {status_text}')
     print(f'userId - {user_id}')
     users_collection.update_one({'id': user_id}, {'$set': {'statusText': status_text}})
-    response = jsonify('OK')
+    response = jsonify({'statusText': status_text})
     return response
 
 
 @app.after_request
 def add_cors_headers(response):
-    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3001')
+    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
     response.headers.add('Access-Control-Allow-Credentials', 'true')
