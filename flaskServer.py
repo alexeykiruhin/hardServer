@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from flask_jwt_extended import create_access_token, JWTManager, jwt_required, get_jwt_identity
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -11,59 +11,58 @@ posts_collection = mongo.posts
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
-app.secret_key = 'secret'
 app.config['JWT_SECRET_KEY'] = '23sa3501080X'  # задаем секретный ключ для подписи токена
 
 jwt = JWTManager(app)  # инициализируем объект JWTManager
 
 # инициализация LoginManager
-login_manager = LoginManager()
-login_manager.init_app(app)
-
+# login_manager = LoginManager()
+# login_manager.init_app(app)
+#
 
 # реализация класса пользователя
-class User(UserMixin):
-    def __init__(self, id, username, password, img, rating):
-        self.id = id
-        self.username = username
-        self.password = password
-        self.img = img
-        self.rating = rating
-
-    def check_password(self, password):
-        # return check_password_hash(self.password_hash, password)
-        return self.password == password
-
-    def is_authenticated(self):
-        return True
-
-    def is_active(self):
-        return True
-
-    def is_anonymous(self):
-        return False
-
-    def get_id(self):
-        return str(self.id)
-
-    def get_info(self):
-        return {'username': self.username, 'img': self.img}
-
-    @staticmethod
-    def authenticate(username, password):
-        user = users_collection.find_one({'username': username}, {'_id': False})
-        if user and user['password'] == password:
-            return User(user['id'], user['username'], user['password'], user['img'], user['rating'])
-        return None
+# class User(UserMixin):
+#     def __init__(self, id, username, password, img, rating):
+#         self.id = id
+#         self.username = username
+#         self.password = password
+#         self.img = img
+#         self.rating = rating
+#
+#     def check_password(self, password):
+#         # return check_password_hash(self.password_hash, password)
+#         return self.password == password
+#
+#     def is_authenticated(self):
+#         return True
+#
+#     def is_active(self):
+#         return True
+#
+#     def is_anonymous(self):
+#         return False
+#
+#     def get_id(self):
+#         return str(self.id)
+#
+#     def get_info(self):
+#         return {'username': self.username, 'img': self.img}
+#
+#     @staticmethod
+#     def authenticate(username, password):
+#         user = users_collection.find_one({'username': username}, {'_id': False})
+#         if user and user['password'] == password:
+#             return User(user['id'], user['username'], user['password'], user['img'], user['rating'])
+#         return None
 
 
 # реализация функции для получения пользователя по его id
-@login_manager.user_loader
-def load_user(user_id):
-    user = users_collection.find_one({'id': int(user_id)}, {'_id': False})
-    if user:
-        return User(user['id'], user['username'], user['password'], user['img'], user['rating'])
-    return None
+# @login_manager.user_loader
+# def load_user(user_id):
+#     user = users_collection.find_one({'id': int(user_id)}, {'_id': False})
+#     if user:
+#         return User(user['id'], user['username'], user['password'], user['img'], user['rating'])
+#     return None
 
 
 # обработка запроса на регистрацию пользователя !не доделана
@@ -88,28 +87,28 @@ def register():
 
 
 # обработка запроса на авторизацию пользователя
-@app.route('/login', methods=['POST'])
+@app.route('/api/login', methods=['POST'])
 def login():
     # получаем данные из запроса
     data = request.json
-    # print(data)
     # ищем пользователя в базе данных
     user = users_collection.find_one({'username': data['username']}, {'_id': 0})
     # print(user)
     # проверяем пароль
     if user['password'] == data['password']:
-        print('in')
         # создаем токен
-        token = create_access_token(identity=user['id'])
-        print(token)
+        access_token = create_access_token(identity=user['id'])
+        print(access_token)
         # кастылём удаляю пароль из ответа
         del user['password']
         # возвращаем токен
         # return jsonify({'access_token': token})
-        response = jsonify({'user_obj': user, 'isAuth': True})  # для теста ставим false
-        response.set_cookie('access-token', token, samesite='None', httponly=True, secure=False)
+        response = jsonify({'user_obj': user, 'isAuth': True, 'access_token': access_token})  # для теста ставим false
+        # httponly = True,, domain='dev.localhost'
+        # response = jsonify({'access_token': access_token})
+        response.set_cookie('access-token', access_token, samesite='None', secure=True, expires=3600)
         return response
-
+        # return access_token
     # возвращаем ошибку
     return jsonify({'message': 'Invalid username or password'}), 401
 
@@ -124,13 +123,19 @@ def logout():
 
 # защита эндпоинта для авторизованных пользователей
 @app.route('/protected')
-@login_required
+@jwt_required()
 def protected():
-    return jsonify({'message': 'You are authorized!'})
+    user_id = get_jwt_identity()
+    user_obj = users_collection.find_one({'id': user_id}, {'_id': 0})
+    # кастылём удаляю пароль из ответа
+    del user_obj['password']
+    response = jsonify({'user_obj': user_obj, 'isAuth': True})
+    print('protected')
+    return response
 
 
 # получение постов
-@app.route('/posts', methods=['GET', 'OPTIONS'])
+@app.route('/api/posts', methods=['GET', 'OPTIONS'])
 def get_posts():
     page = int(request.args.get('page', 1))
     page_size = int(request.args.get('page_size', 2))
@@ -181,11 +186,14 @@ def get_posts():
     result = posts_collection.aggregate(pipeline)
     count = posts_collection.count_documents({})
     posts = [post for post in result]
-    return jsonify({'posts': posts, 'count': count})
+    response = jsonify({'posts': posts, 'count': count})
+    # response.set_cookie('test', 'test', samesite='None', secure=True)
+    return response
 
 
 # добавление поста
-@app.route('/posts', methods=['POST'])
+@app.route('/api/posts', methods=['POST'])
+@jwt_required()
 def add_post():
     post_data = request.json
     author_id = post_data['author_id']
@@ -208,7 +216,8 @@ def add_post():
     return jsonify({'id': str(result.inserted_id)})
 
 
-@app.route('/users', methods=['GET', 'OPTIONS'])
+@app.route('/api/users', methods=['GET', 'OPTIONS'])
+@jwt_required()
 def get_users():
     users_list = []
     for user in users_collection.find({}, {'_id': 0, 'password': 0}):
@@ -218,8 +227,8 @@ def get_users():
     return response
 
 
-@app.route('/user/<int:user_id>', methods=['GET', 'OPTIONS'])
-# @jwt_required()  # использование декоратора для проверки токена
+@app.route('/api/user/<int:user_id>', methods=['GET', 'OPTIONS'])
+@jwt_required()  # использование декоратора для проверки токена
 def get_user(user_id):
     # получение идентификатора пользователя из токена
     # current_user_id = get_jwt_identity()
@@ -259,8 +268,8 @@ def get_user(user_id):
     return response
 
 
-@app.route('/user/<int:user_id>', methods=['POST', 'OPTIONS'])
-# @jwt_required()  # использование декоратора для проверки токена
+@app.route('/api/user/<int:user_id>', methods=['POST', 'OPTIONS'])
+@jwt_required()  # использование декоратора для проверки токена
 def upd_user(user_id):
     # получаем данные из запроса
     data = request.json
