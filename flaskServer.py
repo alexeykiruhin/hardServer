@@ -1,3 +1,5 @@
+import random
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
 from flask_jwt_extended import create_access_token, JWTManager, jwt_required, get_jwt_identity
@@ -14,6 +16,7 @@ CORS(app, supports_credentials=True)
 app.config['JWT_SECRET_KEY'] = '23sa3501080X'  # задаем секретный ключ для подписи токена
 
 jwt = JWTManager(app)  # инициализируем объект JWTManager
+
 
 # инициализация LoginManager
 # login_manager = LoginManager()
@@ -66,7 +69,7 @@ jwt = JWTManager(app)  # инициализируем объект JWTManager
 
 
 # обработка запроса на регистрацию пользователя !не доделана
-@app.route('/register', methods=['POST'])
+@app.route('/api/register', methods=['POST'])
 def register():
     # получаем данные из запроса
     data = request.json
@@ -80,10 +83,20 @@ def register():
         # создаем нового пользователя
         if data['username'] and data['password']:
             #  проверяем что логин и пароль передали
-            pass
-            return jsonify({'message': 'User registered successfully'})
+            print(users_collection.count_documents({}))
+            length_users = users_collection.count_documents({})
+            usr = {
+                "id": length_users + 1,
+                "username": data['username'],
+                "password": data['password'],
+                "img": f"https://randomuser.me/api/portraits/men/{random.randint(1,100)}.jpg",
+                "rating": 100,
+                "statusText": "newbie"
+            }
+            users_collection.insert_one(usr)
+            return jsonify({'isReg': True})
         else:
-            return jsonify({'error': 'Missing username or password'})
+            return jsonify({'isReg': False})
 
 
 # обработка запроса на авторизацию пользователя
