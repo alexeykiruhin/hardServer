@@ -13,7 +13,8 @@ posts_collection = mongo.posts
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
-app.config['JWT_SECRET_KEY'] = '23sa3501080X'  # задаем секретный ключ для подписи токена
+# задаем секретный ключ для подписи токена
+app.config['JWT_SECRET_KEY'] = '23sa3501080X'
 
 jwt = JWTManager(app)  # инициализируем объект JWTManager
 
@@ -75,7 +76,8 @@ def register():
     data = request.json
 
     # проверяем, что такой пользователь не существует
-    user = users_collection.find_one({'username': data['username']}, {'_id': 0})
+    user = users_collection.find_one(
+        {'username': data['username']}, {'_id': 0})
     if user:
         # существует
         return jsonify({'error': 'User already exists'})
@@ -105,7 +107,8 @@ def login():
     # получаем данные из запроса
     data = request.json
     # ищем пользователя в базе данных
-    user = users_collection.find_one({'username': data['username']}, {'_id': 0})
+    user = users_collection.find_one(
+        {'username': data['username']}, {'_id': 0})
     # print(user)
     # проверяем пароль
     if user['password'] == data['password']:
@@ -116,10 +119,13 @@ def login():
         del user['password']
         # возвращаем токен
         # return jsonify({'access_token': token})
-        response = jsonify({'user_obj': user, 'isAuth': True, 'access_token': access_token})  # для теста ставим false
+        # для теста ставим false
+        response = jsonify(
+            {'user_obj': user, 'isAuth': True, 'access_token': access_token})
         # httponly = True,, domain='dev.localhost'
         # response = jsonify({'access_token': access_token})
-        response.set_cookie('access-token', access_token, samesite='None', secure=True, expires=3600)
+        response.set_cookie('access-token', access_token,
+                            samesite='None', secure=True, expires=3600)
         return response
         # return access_token
     # возвращаем ошибку
@@ -211,22 +217,25 @@ def add_post():
     post_data = request.json
     author_id = post_data['author_id']
     post_text = post_data['text']
-
+    print(f'id - {author_id}   msg - {post_text}')
     # получаем автора поста из коллекции users
-    author = users_collection.find_one({'_id': author_id})
+    author = users_collection.find_one({'id': author_id}, {'_id': 1})
+    print(author)
+    # return jsonify('OK')
 
     # создаем новый документ в коллекции posts
+
+    id = posts_collection.count_documents({}) + 1
     new_post = {
-        'text': post_text,
-        'author': {
-            '_id': author['_id'],
-            'username': author['username']
-        }
+        "id": id,
+        "text": post_text,
+        "rating": 100,
+        "author": author['_id']
     }
     result = posts_collection.insert_one(new_post)
 
     # возвращаем id добавленного поста
-    return jsonify({'id': str(result.inserted_id)})
+    return jsonify({'isCreate': True})
 
 
 @app.route('/api/users', methods=['GET', 'OPTIONS'])
@@ -246,7 +255,8 @@ def get_user(user_id):
     # получение идентификатора пользователя из токена
     # current_user_id = get_jwt_identity()
     # print(current_user_id)
-    user_info = users_collection.find_one({'id': user_id}, {'_id': 0, 'password': 0})
+    user_info = users_collection.find_one(
+        {'id': user_id}, {'_id': 0, 'password': 0})
     user_posts = posts_collection.aggregate([
         {
             '$lookup':
@@ -289,16 +299,20 @@ def upd_user(user_id):
     status_text = data['statusText']
     print(f'status_text - {status_text}')
     print(f'userId - {user_id}')
-    users_collection.update_one({'id': user_id}, {'$set': {'statusText': status_text}})
+    users_collection.update_one(
+        {'id': user_id}, {'$set': {'statusText': status_text}})
     response = jsonify({'statusText': status_text})
     return response
 
 
 @app.after_request
 def add_cors_headers(response):
-    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    response.headers.add('Access-Control-Allow-Origin',
+                         'http://localhost:3000')
+    response.headers.add('Access-Control-Allow-Methods',
+                         'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Headers',
+                         'Content-Type, Authorization')
     response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response
 
