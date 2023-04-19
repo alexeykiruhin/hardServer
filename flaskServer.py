@@ -1,8 +1,9 @@
+import datetime
 import random
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
-from flask_jwt_extended import create_access_token, JWTManager, jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token, create_refresh_token, JWTManager, jwt_required, get_jwt_identity
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 import mongo
@@ -12,6 +13,7 @@ users_collection = mongo.users
 posts_collection = mongo.posts
 
 app = Flask(__name__)
+app.secret_key = 'mysecretkey'
 CORS(app, supports_credentials=True)
 # задаем секретный ключ для подписи токена
 app.config['JWT_SECRET_KEY'] = '23sa3501080X'
@@ -63,9 +65,9 @@ def login():
         return jsonify({'messageError': f'Пользователя с логином {data["username"]} не существует'}), 401
     # проверяем пароль
     if user['password'] == data['password']:
-        # создаем токен
-        access_token = create_access_token(identity=user['id'])
-        refresh_token = create_access_token(identity=user['username'])
+        # создаем токен, вынести в отдельную функцию
+        access_token = create_access_token(identity=user['id'], expires_delta=datetime.timedelta(minutes=1))
+        refresh_token = create_refresh_token(identity=user['id'], expires_delta=datetime.timedelta(days=7))
         print(access_token)
         # после проверки пароля удаляю его из объекта юзера, перед ответом на клиент
         del user['password']
@@ -73,16 +75,31 @@ def login():
         # return jsonify({'access_token': token})
         # для теста ставим false
         response = jsonify(
-            {'user_obj': user, 'isAuth': True, 'access_token': access_token})
+            {'user_obj': user, 'isAuth': True, 'access_token': access_token, 'refresh_token': refresh_token})
         # httponly = True,, domain='dev.localhost'
         # response = jsonify({'access_token': access_token})
-        response.set_cookie('access-token', access_token,
-                            samesite='None', secure=True, expires=3600)
+        response.set_cookie('access_token', access_token, samesite='None', secure=True, expires=3600)
+        response.set_cookie('refresh_token', refresh_token, samesite='None', secure=True, expires=3600)
         return response
         # return access_token
     # возвращаем ошибку
     print('Неверный пароль')
     return jsonify({'messageError': 'Неверный пароль'}), 401
+
+
+# Эндпоинт для обновления access token по refresh token
+@app.route('/api/refresh', methods=['POST'])
+@jwt_required(refresh=True)
+def refresh():
+    # Получение refresh token из запроса
+    refresh_token = request.json.get('refresh_token')
+    print(f'refresh_token - {refresh_token}')
+    # Проверка валидности refresh token (здесь может быть ваша логика проверки)
+    # ...
+    current_user = get_jwt_identity()
+    print(f'current_user - {current_user}')
+    new_access_token = create_access_token(identity=current_user)
+    return jsonify({'access_token': new_access_token}), 200
 
 
 # обработка запроса на выход из системы
