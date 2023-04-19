@@ -19,56 +19,6 @@ app.config['JWT_SECRET_KEY'] = '23sa3501080X'
 jwt = JWTManager(app)  # инициализируем объект JWTManager
 
 
-# инициализация LoginManager
-# login_manager = LoginManager()
-# login_manager.init_app(app)
-#
-
-# реализация класса пользователя
-# class User(UserMixin):
-#     def __init__(self, id, username, password, img, rating):
-#         self.id = id
-#         self.username = username
-#         self.password = password
-#         self.img = img
-#         self.rating = rating
-#
-#     def check_password(self, password):
-#         # return check_password_hash(self.password_hash, password)
-#         return self.password == password
-#
-#     def is_authenticated(self):
-#         return True
-#
-#     def is_active(self):
-#         return True
-#
-#     def is_anonymous(self):
-#         return False
-#
-#     def get_id(self):
-#         return str(self.id)
-#
-#     def get_info(self):
-#         return {'username': self.username, 'img': self.img}
-#
-#     @staticmethod
-#     def authenticate(username, password):
-#         user = users_collection.find_one({'username': username}, {'_id': False})
-#         if user and user['password'] == password:
-#             return User(user['id'], user['username'], user['password'], user['img'], user['rating'])
-#         return None
-
-
-# реализация функции для получения пользователя по его id
-# @login_manager.user_loader
-# def load_user(user_id):
-#     user = users_collection.find_one({'id': int(user_id)}, {'_id': False})
-#     if user:
-#         return User(user['id'], user['username'], user['password'], user['img'], user['rating'])
-#     return None
-
-
 # обработка запроса на регистрацию пользователя !не доделана
 @app.route('/api/register', methods=['POST'])
 def register():
@@ -91,7 +41,7 @@ def register():
                 "id": length_users + 1,
                 "username": data['username'],
                 "password": data['password'],
-                "img": f"https://randomuser.me/api/portraits/men/{random.randint(1,100)}.jpg",
+                "img": f"https://randomuser.me/api/portraits/men/{random.randint(1, 100)}.jpg",
                 "rating": 100,
                 "statusText": "newbie"
             }
@@ -107,15 +57,17 @@ def login():
     # получаем данные из запроса
     data = request.json
     # ищем пользователя в базе данных
-    user = users_collection.find_one(
-        {'username': data['username']}, {'_id': 0})
-    # print(user)
+    user = users_collection.find_one({'username': data['username']}, {'_id': 0})
+    if user is None:
+        print(f'Пользователя с логином {data["username"]} не существует')
+        return jsonify({'messageError': f'Пользователя с логином {data["username"]} не существует'}), 401
     # проверяем пароль
     if user['password'] == data['password']:
         # создаем токен
         access_token = create_access_token(identity=user['id'])
+        refresh_token = create_access_token(identity=user['username'])
         print(access_token)
-        # кастылём удаляю пароль из ответа
+        # после проверки пароля удаляю его из объекта юзера, перед ответом на клиент
         del user['password']
         # возвращаем токен
         # return jsonify({'access_token': token})
@@ -129,7 +81,8 @@ def login():
         return response
         # return access_token
     # возвращаем ошибку
-    return jsonify({'message': 'Invalid username or password'}), 401
+    print('Неверный пароль')
+    return jsonify({'messageError': 'Неверный пароль'}), 401
 
 
 # обработка запроса на выход из системы
@@ -225,14 +178,15 @@ def add_post():
 
     # создаем новый документ в коллекции posts
 
-    id = posts_collection.count_documents({}) + 1
+    current_id = posts_collection.count_documents({}) + 1
     new_post = {
-        "id": id,
+        "id": current_id,
         "text": post_text,
         "rating": 100,
         "author": author['_id']
     }
-    result = posts_collection.insert_one(new_post)
+    # добавляем пост в бд
+    posts_collection.insert_one(new_post)
 
     # возвращаем id добавленного поста
     return jsonify({'isCreate': True})
