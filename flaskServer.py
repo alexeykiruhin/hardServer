@@ -98,7 +98,7 @@ def refresh():
     # ...
     current_user = get_jwt_identity()
     print(f'current_user - {current_user}')
-    new_access_token = create_access_token(identity=current_user)
+    new_access_token = create_access_token(identity=current_user, expires_delta=datetime.timedelta(minutes=1))
     return jsonify({'access_token': new_access_token}), 200
 
 
