@@ -59,47 +59,42 @@ def login():
     # получаем данные из запроса
     data = request.json
     # ищем пользователя в базе данных
-    user = users_collection.find_one({'username': data['username']}, {'_id': 0})
+    user = users_collection.find_one({'username': data['username']}, {'_id': 0, 'statusText': 0, 'rating': 0})
     if user is None:
         print(f'Пользователя с логином {data["username"]} не существует')
         return jsonify({'messageError': f'Пользователя с логином {data["username"]} не существует'}), 401
     # проверяем пароль
     if user['password'] == data['password']:
         # создаем токен, вынести в отдельную функцию
-        access_token = create_access_token(identity=user['id'], expires_delta=datetime.timedelta(minutes=1))
-        refresh_token = create_refresh_token(identity=user['id'], expires_delta=datetime.timedelta(days=7))
+        access_token = create_access_token(identity=user['id'], expires_delta=datetime.timedelta(seconds=20))
+        refresh_token = create_refresh_token(identity=user['id'], expires_delta=datetime.timedelta(seconds=30))
         print(access_token)
         # после проверки пароля удаляю его из объекта юзера, перед ответом на клиент
         del user['password']
-        # возвращаем токен
-        # return jsonify({'access_token': token})
-        # для теста ставим false
         response = jsonify(
             {'user_obj': user, 'isAuth': True, 'access_token': access_token, 'refresh_token': refresh_token})
-        # httponly = True,, domain='dev.localhost'
-        # response = jsonify({'access_token': access_token})
-        response.set_cookie('access_token', access_token, samesite='None', secure=True, expires=3600)
-        response.set_cookie('refresh_token', refresh_token, samesite='None', secure=True, expires=3600)
+        response.set_cookie('refresh_token', refresh_token, httponly=False, max_age=30*24*60*60, samesite=None, secure=True, path='/')
         return response
-        # return access_token
     # возвращаем ошибку
     print('Неверный пароль')
     return jsonify({'messageError': 'Неверный пароль'}), 401
 
-
 # Эндпоинт для обновления access token по refresh token
-@app.route('/api/refresh', methods=['POST'])
-@jwt_required(refresh=True)
+@app.route('/api/refresh', methods=['GET'])
+@jwt_required(refresh=True, locations= ['headers', 'cookies'])
 def refresh():
-    # Получение refresh token из запроса
-    refresh_token = request.json.get('refresh_token')
-    print(f'refresh_token - {refresh_token}')
-    # Проверка валидности refresh token (здесь может быть ваша логика проверки)
-    # ...
+    print(request.cookies.get('refresh_token'))
     current_user = get_jwt_identity()
-    print(f'current_user - {current_user}')
-    new_access_token = create_access_token(identity=current_user, expires_delta=datetime.timedelta(minutes=1))
-    return jsonify({'access_token': new_access_token}), 200
+    print(f'user - {current_user}')
+    # получаем данные юзера
+    user = users_collection.find_one({'id': current_user}, {'_id': 0, 'password': 0})
+    print(f'user - {user}')
+    new_access_token = create_access_token(identity=current_user, expires_delta=datetime.timedelta(seconds=20))
+    # new_refresh_token = create_refresh_token(identity=current_user, expires_delta=datetime.timedelta(seconds=20))
+    print('новые токены сгенерированы')
+    response = jsonify({'user_obj': user, 'isAuth': True, 'access_token': new_access_token})
+    # response.set_cookie('refresh_token', new_refresh_token, httponly=False, max_age=30*24*60*60, samesite=None, secure=True, path='/')
+    return response
 
 
 # обработка запроса на выход из системы
@@ -278,13 +273,12 @@ def upd_user(user_id):
 
 @app.after_request
 def add_cors_headers(response):
-    response.headers.add('Access-Control-Allow-Origin',
-                         'http://localhost:3000')
-    response.headers.add('Access-Control-Allow-Methods',
-                         'GET,PUT,POST,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Headers',
-                         'Content-Type, Authorization')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    # response.headers.add('Access-Control-Allow-Origin',
+    #                      'http://localhost:3000')
+    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:3000'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
     return response
 
 
