@@ -4,7 +4,6 @@ import random
 from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
 from flask_jwt_extended import create_access_token, create_refresh_token, JWTManager, jwt_required, get_jwt_identity
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 import mongo
 
@@ -17,6 +16,15 @@ app.secret_key = 'mysecretkey'
 CORS(app, supports_credentials=True)
 # задаем секретный ключ для подписи токена
 app.config['JWT_SECRET_KEY'] = '23sa3501080X'
+app.config['JWT_TOKEN_LOCATION'] = ['cookies']
+# app.config['JWT_REFRESH_TOKEN_LOCATION'] = ['cookies']
+app.config['JWT_REFRESH_COOKIE_NAME'] = 'token'
+
+# app.config['JWT_TOKEN_LOCATION'] = ['headers']  # Ожидаем токен в заголовках
+# app.config['JWT_HEADER_NAME'] = 'Authorization'  # Имя заголовка, в котором ожидается токен
+# app.config['JWT_REFRESH_TOKEN_LOCATION'] = ['cookies']  # Ожидаем refresh-токен в куках
+# app.config['JWT_REFRESH_COOKIE_NAME'] = 'refresh_token'  # Имя куки, в которой ожидается refresh-токен
+
 
 jwt = JWTManager(app)  # инициализируем объект JWTManager
 
@@ -67,13 +75,14 @@ def login():
     if user['password'] == data['password']:
         # создаем токен, вынести в отдельную функцию
         access_token = create_access_token(identity=user['id'], expires_delta=datetime.timedelta(seconds=20))
-        refresh_token = create_refresh_token(identity=user['id'], expires_delta=datetime.timedelta(seconds=30))
-        print(access_token)
+        refresh_token = create_refresh_token(identity=user['id'], expires_delta=datetime.timedelta(days=30))
+        # print(access_token)
         # после проверки пароля удаляю его из объекта юзера, перед ответом на клиент
         del user['password']
         response = jsonify(
             {'user_obj': user, 'isAuth': True, 'access_token': access_token, 'refresh_token': refresh_token})
-        response.set_cookie('refresh_token', refresh_token, httponly=False, max_age=30*24*60*60, samesite=None, secure=True, path='/')
+        # response.set_cookie('refresh_token', refresh_token, httponly=True, max_age=30*24*60*60, samesite='None', secure=True, path='/api')
+        response.set_cookie('token', refresh_token, httponly=True, max_age=30*24*60*60, samesite='None', secure=True, path='/api')
         return response
     # возвращаем ошибку
     print('Неверный пароль')
@@ -81,27 +90,29 @@ def login():
 
 # Эндпоинт для обновления access token по refresh token
 @app.route('/api/refresh', methods=['GET'])
-@jwt_required(refresh=True, locations= ['headers', 'cookies'])
+@jwt_required(refresh=True)
+# @jwt_required(refresh=True, locations=['cookies'])
+# @jwt_required(refresh=True, locations=['headers', 'cookies'])
 def refresh():
-    print(request.cookies.get('refresh_token'))
+    print(f"cookie  -  {request.cookies.get('token')}")
     current_user = get_jwt_identity()
     print(f'user - {current_user}')
     # получаем данные юзера
     user = users_collection.find_one({'id': current_user}, {'_id': 0, 'password': 0})
-    print(f'user - {user}')
+    # print(f'user - {user}')
     new_access_token = create_access_token(identity=current_user, expires_delta=datetime.timedelta(seconds=20))
-    # new_refresh_token = create_refresh_token(identity=current_user, expires_delta=datetime.timedelta(seconds=20))
+    new_refresh_token = create_refresh_token(identity=current_user, expires_delta=datetime.timedelta(days=30))
     print('новые токены сгенерированы')
     response = jsonify({'user_obj': user, 'isAuth': True, 'access_token': new_access_token})
     # response.set_cookie('refresh_token', new_refresh_token, httponly=False, max_age=30*24*60*60, samesite=None, secure=True, path='/')
+    response.set_cookie('token', new_refresh_token, httponly=True, max_age=30*24*60*60, samesite='None', secure=True, path='/api')
     return response
 
 
 # обработка запроса на выход из системы
-@app.route('/logout')
-@login_required
+@app.route('/api/logout')
 def logout():
-    logout_user()
+    # logout logic
     return jsonify({'message': 'User logged out successfully'})
 
 
@@ -205,8 +216,11 @@ def add_post():
 
 
 @app.route('/api/users', methods=['GET', 'OPTIONS'])
-@jwt_required()
+@jwt_required(locations=['headers', 'cookies'])
 def get_users():
+    # ошибку с ними получаю
+    # current_user_id = get_jwt_identity()
+    # print(current_user_id)
     users_list = []
     for user in users_collection.find({}, {'_id': 0, 'password': 0}):
         users_list.append(user)
@@ -216,9 +230,9 @@ def get_users():
 
 
 @app.route('/api/user/<int:user_id>', methods=['GET', 'OPTIONS'])
-@jwt_required()  # использование декоратора для проверки токена
+@jwt_required(locations=['headers', 'cookies'])  # использование декоратора для проверки токена
 def get_user(user_id):
-    # получение идентификатора пользователя из токена
+    # получение идентификатора пользователя из токена тут получаю ошибку
     # current_user_id = get_jwt_identity()
     # print(current_user_id)
     user_info = users_collection.find_one(
