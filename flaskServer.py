@@ -16,7 +16,7 @@ app.secret_key = 'mysecretkey'
 CORS(app, supports_credentials=True)
 # задаем секретный ключ для подписи токена
 app.config['JWT_SECRET_KEY'] = '23sa3501080X'
-app.config['JWT_TOKEN_LOCATION'] = ['cookies']
+app.config['JWT_TOKEN_LOCATION'] = ['cookies', 'headers']
 # app.config['JWT_REFRESH_TOKEN_LOCATION'] = ['cookies']
 app.config['JWT_REFRESH_COOKIE_NAME'] = 'token'
 
@@ -216,7 +216,8 @@ def add_post():
 
 
 @app.route('/api/users', methods=['GET', 'OPTIONS'])
-@jwt_required(locations=['headers', 'cookies'])
+# @jwt_required(locations=['headers', 'cookies'])
+@jwt_required()
 def get_users():
     # ошибку с ними получаю
     # current_user_id = get_jwt_identity()
@@ -230,7 +231,7 @@ def get_users():
 
 
 @app.route('/api/user/<int:user_id>', methods=['GET', 'OPTIONS'])
-@jwt_required(locations=['headers', 'cookies'])  # использование декоратора для проверки токена
+@jwt_required()  # использование декоратора для проверки токена
 def get_user(user_id):
     # получение идентификатора пользователя из токена тут получаю ошибку
     # current_user_id = get_jwt_identity()
