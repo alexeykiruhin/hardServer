@@ -14,17 +14,13 @@ posts_collection = mongo.posts
 app = Flask(__name__)
 app.secret_key = 'mysecretkey'
 CORS(app, supports_credentials=True)
+
 # задаем секретный ключ для подписи токена
 app.config['JWT_SECRET_KEY'] = '23sa3501080X'
+# Ожидаем токенs в куках и хедерах
 app.config['JWT_TOKEN_LOCATION'] = ['cookies', 'headers']
-# app.config['JWT_REFRESH_TOKEN_LOCATION'] = ['cookies']
+# Имя куки, в которой ожидается refresh-токен
 app.config['JWT_REFRESH_COOKIE_NAME'] = 'token'
-
-# app.config['JWT_TOKEN_LOCATION'] = ['headers']  # Ожидаем токен в заголовках
-# app.config['JWT_HEADER_NAME'] = 'Authorization'  # Имя заголовка, в котором ожидается токен
-# app.config['JWT_REFRESH_TOKEN_LOCATION'] = ['cookies']  # Ожидаем refresh-токен в куках
-# app.config['JWT_REFRESH_COOKIE_NAME'] = 'refresh_token'  # Имя куки, в которой ожидается refresh-токен
-
 
 jwt = JWTManager(app)  # инициализируем объект JWTManager
 
@@ -50,7 +46,7 @@ def register():
             usr = {
                 "id": length_users + 1,
                 "username": data['username'],
-                "password": data['password'],
+                "password": data['password'], #  сделать хеширование
                 "img": f"https://randomuser.me/api/portraits/men/{random.randint(1, 100)}.jpg",
                 "rating": 100,
                 "statusText": "newbie"
@@ -76,7 +72,6 @@ def login():
         # создаем токен, вынести в отдельную функцию
         access_token = create_access_token(identity=user['id'], expires_delta=datetime.timedelta(seconds=20))
         refresh_token = create_refresh_token(identity=user['id'], expires_delta=datetime.timedelta(days=30))
-        # print(access_token)
         # после проверки пароля удаляю его из объекта юзера, перед ответом на клиент
         del user['password']
         response = jsonify(
@@ -88,11 +83,10 @@ def login():
     print('Неверный пароль')
     return jsonify({'messageError': 'Неверный пароль'}), 401
 
+
 # Эндпоинт для обновления access token по refresh token
 @app.route('/api/refresh', methods=['GET'])
 @jwt_required(refresh=True)
-# @jwt_required(refresh=True, locations=['cookies'])
-# @jwt_required(refresh=True, locations=['headers', 'cookies'])
 def refresh():
     print(f"cookie  -  {request.cookies.get('token')}")
     current_user = get_jwt_identity()
@@ -288,8 +282,6 @@ def upd_user(user_id):
 
 @app.after_request
 def add_cors_headers(response):
-    # response.headers.add('Access-Control-Allow-Origin',
-    #                      'http://localhost:3000')
     response.headers['Access-Control-Allow-Origin'] = 'http://localhost:3000'
     response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
