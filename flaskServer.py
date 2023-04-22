@@ -1,7 +1,7 @@
 import datetime
 import random
 
-from flask import Flask, jsonify, request
+from flask import Flask, make_response, request
 from flask_cors import CORS, cross_origin
 from flask_jwt_extended import create_access_token, create_refresh_token, JWTManager, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -36,7 +36,7 @@ def register():
         {'username': data['username']}, {'_id': 0})
     if user:
         # существует
-        return jsonify({'error': 'User already exists'})
+        return {'error': 'User already exists'}
     else:
         # создаем нового пользователя
         if data['username'] and data['password']:
@@ -52,9 +52,9 @@ def register():
                 "statusText": "newbie"
             }
             users_collection.insert_one(usr)
-            return jsonify({'isReg': True})
+            return {'isReg': True}
         else:
-            return jsonify({'isReg': False})
+            return {'isReg': False}
 
 
 # обработка запроса на авторизацию пользователя
@@ -66,22 +66,23 @@ def login():
     user = users_collection.find_one({'username': data['username']}, {'_id': 0, 'statusText': 0, 'rating': 0})
     if user is None:
         print(f'Пользователя с логином {data["username"]} не существует')
-        return jsonify({'messageError': f'Пользователя с логином {data["username"]} не существует'}), 401
+        return {'messageError': f'Пользователя с логином {data["username"]} не существует'}, 401
     # проверяем пароль
     if user['password'] == data['password']:
         # создаем токен, вынести в отдельную функцию
-        access_token = create_access_token(identity=user['id'], expires_delta=datetime.timedelta(seconds=20))
+        access_token = create_access_token(identity=user['id'], expires_delta=datetime.timedelta(minutes=15))
         refresh_token = create_refresh_token(identity=user['id'], expires_delta=datetime.timedelta(days=30))
         # после проверки пароля удаляю его из объекта юзера, перед ответом на клиент
         del user['password']
-        response = jsonify(
-            {'user_obj': user, 'isAuth': True, 'access_token': access_token, 'refresh_token': refresh_token})
+        # тут использую make_response т.к. set_cookie метод объекта response без него получаю ошибку 'dict' object has no attribute 'set_cookie'
+        # в остальных ответах фласк сам преобразует в json
+        response = make_response({'user_obj': user, 'isAuth': True, 'access_token': access_token, 'refresh_token': refresh_token})
         # response.set_cookie('refresh_token', refresh_token, httponly=True, max_age=30*24*60*60, samesite='None', secure=True, path='/api')
         response.set_cookie('token', refresh_token, httponly=True, max_age=30*24*60*60, samesite='None', secure=True, path='/api')
         return response
     # возвращаем ошибку
     print('Неверный пароль')
-    return jsonify({'messageError': 'Неверный пароль'}), 401
+    return {'messageError': 'Неверный пароль'}, 401
 
 
 # Эндпоинт для обновления access token по refresh token
@@ -93,12 +94,12 @@ def refresh():
     print(f'user - {current_user}')
     # получаем данные юзера
     user = users_collection.find_one({'id': current_user}, {'_id': 0, 'password': 0})
-    # print(f'user - {user}')
-    new_access_token = create_access_token(identity=current_user, expires_delta=datetime.timedelta(seconds=20))
+    new_access_token = create_access_token(identity=current_user, expires_delta=datetime.timedelta(minutes=15))
     new_refresh_token = create_refresh_token(identity=current_user, expires_delta=datetime.timedelta(days=30))
     print('новые токены сгенерированы')
-    response = jsonify({'user_obj': user, 'isAuth': True, 'access_token': new_access_token})
-    # response.set_cookie('refresh_token', new_refresh_token, httponly=False, max_age=30*24*60*60, samesite=None, secure=True, path='/')
+    # тут использую make_response т.к. set_cookie метод объекта response без него получаю ошибку 'dict' object has no attribute 'set_cookie'
+    # в остальных ответах фласк сам преобразует в json
+    response = make_response({'user_obj': user, 'isAuth': True, 'access_token': new_access_token})
     response.set_cookie('token', new_refresh_token, httponly=True, max_age=30*24*60*60, samesite='None', secure=True, path='/api')
     return response
 
@@ -107,7 +108,7 @@ def refresh():
 @app.route('/api/logout')
 def logout():
     # logout logic
-    return jsonify({'message': 'User logged out successfully'})
+    return {'message': 'User logged out successfully'}
 
 
 # защита эндпоинта для авторизованных пользователей
@@ -118,7 +119,7 @@ def protected():
     user_obj = users_collection.find_one({'id': user_id}, {'_id': 0})
     # кастылём удаляю пароль из ответа
     del user_obj['password']
-    response = jsonify({'user_obj': user_obj, 'isAuth': True})
+    response = {'user_obj': user_obj, 'isAuth': True}
     print('protected')
     return response
 
@@ -175,7 +176,7 @@ def get_posts():
     result = posts_collection.aggregate(pipeline)
     count = posts_collection.count_documents({})
     posts = [post for post in result]
-    response = jsonify({'posts': posts, 'count': count})
+    response = {'posts': posts, 'count': count}
     # response.set_cookie('test', 'test', samesite='None', secure=True)
     return response
 
@@ -191,10 +192,8 @@ def add_post():
     # получаем автора поста из коллекции users
     author = users_collection.find_one({'id': author_id}, {'_id': 1})
     print(author)
-    # return jsonify('OK')
 
     # создаем новый документ в коллекции posts
-
     current_id = posts_collection.count_documents({}) + 1
     new_post = {
         "id": current_id,
@@ -205,8 +204,8 @@ def add_post():
     # добавляем пост в бд
     posts_collection.insert_one(new_post)
 
-    # возвращаем id добавленного поста
-    return jsonify({'isCreate': True})
+    # возвращаем флаг создания поста
+    return {'isCreate': True}
 
 
 @app.route('/api/users', methods=['GET', 'OPTIONS'])
@@ -220,7 +219,7 @@ def get_users():
     for user in users_collection.find({}, {'_id': 0, 'password': 0}):
         users_list.append(user)
     count = users_collection.count_documents({})
-    response = jsonify({'users': users_list, 'count': count})
+    response = {'users': users_list, 'count': count}
     return response
 
 
@@ -262,7 +261,7 @@ def get_user(user_id):
     user_info['posts_count'] = len(user_posts)
     # преобразовываем объект бд в список постов
     user_posts = [txt['text'] for txt in user_posts]
-    response = jsonify({'user_info': user_info, 'user_posts': user_posts})
+    response = {'user_info': user_info, 'user_posts': user_posts}
     return response
 
 
@@ -276,7 +275,7 @@ def upd_user(user_id):
     print(f'userId - {user_id}')
     users_collection.update_one(
         {'id': user_id}, {'$set': {'statusText': status_text}})
-    response = jsonify({'statusText': status_text})
+    response = {'statusText': status_text}
     return response
 
 
