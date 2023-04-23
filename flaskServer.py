@@ -46,7 +46,7 @@ def register():
             usr = {
                 "id": length_users + 1,
                 "username": data['username'],
-                "password": data['password'], #  сделать хеширование
+                "password": data['password'],  # сделать хеширование
                 "img": f"https://randomuser.me/api/portraits/men/{random.randint(1, 100)}.jpg",
                 "rating": 100,
                 "statusText": "newbie"
@@ -63,22 +63,30 @@ def login():
     # получаем данные из запроса
     data = request.json
     # ищем пользователя в базе данных
-    user = users_collection.find_one({'username': data['username']}, {'_id': 0, 'statusText': 0, 'rating': 0})
+    user = users_collection.find_one({'username': data['username']}, {
+                                     '_id': 0, 'statusText': 0, 'rating': 0, 'refresh_token': 0})
     if user is None:
         print(f'Пользователя с логином {data["username"]} не существует')
         return {'messageError': f'Пользователя с логином {data["username"]} не существует'}, 401
     # проверяем пароль
     if user['password'] == data['password']:
         # создаем токен, вынести в отдельную функцию
-        access_token = create_access_token(identity=user['id'], expires_delta=datetime.timedelta(seconds=15))
-        refresh_token = create_refresh_token(identity=user['id'], expires_delta=datetime.timedelta(days=30))
+        access_token = create_access_token(
+            identity=user['id'], expires_delta=datetime.timedelta(seconds=15))
+        refresh_token = create_refresh_token(
+            identity=user['id'], expires_delta=datetime.timedelta(days=30))
+        # добавляем токен в бд
+        users_collection.update_one({'username': data['username']}, {
+                                    '$set': {'refresh_token': refresh_token}})
         # после проверки пароля удаляю его из объекта юзера, перед ответом на клиент
         del user['password']
         # тут использую make_response т.к. set_cookie метод объекта response без него получаю ошибку 'dict' object has no attribute 'set_cookie'
         # в остальных ответах фласк сам преобразует в json
-        response = make_response({'user_obj': user, 'isAuth': True, 'access_token': access_token, 'refresh_token': refresh_token})
+        response = make_response({'user_obj': user, 'isAuth': True,
+                                 'access_token': access_token, 'refresh_token': refresh_token})
         # response.set_cookie('refresh_token', refresh_token, httponly=True, max_age=30*24*60*60, samesite='None', secure=True, path='/api')
-        response.set_cookie('token', refresh_token, httponly=True, max_age=30*24*60*60, samesite='None', secure=True, path='/api') # попробовать секьюр флаг поменять
+        response.set_cookie('token', refresh_token, httponly=True, max_age=30*24*60*60,
+                            samesite='None', secure=True, path='/api')  # попробовать секьюр флаг поменять
         return response
     # возвращаем ошибку
     print('Неверный пароль')
@@ -89,25 +97,49 @@ def login():
 @app.route('/api/refresh', methods=['GET'])
 @jwt_required(refresh=True)
 def refresh():
-    print(f"cookie  -  {request.cookies.get('token')}")
+    # получаем рефреш токен из куки
+    token = request.cookies.get('token')
+    # print(f"cookie  -  {request.cookies.get('token')}")
+
+    # получаем id юзера из токена 
     current_user = get_jwt_identity()
-    print(f'user - {current_user}')
+    # print(f'user - {current_user}')
+
     # получаем данные юзера
-    user = users_collection.find_one({'id': current_user}, {'_id': 0, 'password': 0})
-    new_access_token = create_access_token(identity=current_user, expires_delta=datetime.timedelta(minutes=15))
-    new_refresh_token = create_refresh_token(identity=current_user, expires_delta=datetime.timedelta(days=30))
+    user = users_collection.find_one({'id': current_user}, {'_id': 0, 'password': 0, 'statusText': 0, 'rating': 0})
+    
+    # проверка токена с токеном из бд
+    if token != user['refresh_token']:
+        return {'message': 'No valid token'}
+
+    # после проверки токена удаляю его из объекта юзера, перед ответом на клиент
+    del user['refresh_token']
+
+    new_access_token = create_access_token(
+        identity=current_user, expires_delta=datetime.timedelta(seconds=15))
+    new_refresh_token = create_refresh_token(
+        identity=current_user, expires_delta=datetime.timedelta(days=30))
     print('новые токены сгенерированы')
+
+    # обновляем токен в бд
+    users_collection.update_one({'id': current_user}, {'$set': {'refresh_token': new_refresh_token}})
     # тут использую make_response т.к. set_cookie метод объекта response без него получаю ошибку 'dict' object has no attribute 'set_cookie'
     # в остальных ответах фласк сам преобразует в json
-    response = make_response({'user_obj': user, 'isAuth': True, 'access_token': new_access_token})
-    response.set_cookie('token', new_refresh_token, httponly=True, max_age=30*24*60*60, samesite='None', secure=True, path='/api')
+    response = make_response(
+        {'user_obj': user, 'isAuth': True, 'access_token': new_access_token})
+    response.set_cookie('token', new_refresh_token, httponly=True,
+                        max_age=30*24*60*60, samesite='None', secure=True, path='/api')
     return response
 
 
 # обработка запроса на выход из системы
-@app.route('/api/logout')
+@app.route('/api/logout', methods=['GET'])
+@jwt_required(refresh=True)
 def logout():
-    # logout logic
+    # получаем id юзера из токена 
+    current_user = get_jwt_identity()
+    # затираем токен в бд
+    users_collection.update_one({'id': current_user}, {'$set': {'refresh_token': ''}})
     return {'message': 'User logged out successfully'}
 
 
@@ -225,10 +257,10 @@ def get_users():
 
 @app.route('/api/user/<int:user_id>', methods=['GET'])
 @jwt_required()  # использование декоратора для проверки токена
-def get_user(user_id): # сюда передается айди профиля который мы просматриваем
+def get_user(user_id):  # сюда передается айди профиля который мы просматриваем
     # получение идентификатора пользователя из токена тут получаю ошибку
     # verify_jwt_in_request()
-    current_user_id = get_jwt_identity() #  айди юзера из куки
+    current_user_id = get_jwt_identity()  # айди юзера из куки
     print(f'current_user_id - {current_user_id}')
     print(f'user_id - {user_id}')
     user_info = users_collection.find_one(
@@ -264,9 +296,11 @@ def get_user(user_id): # сюда передается айди профиля �
     # преобразовываем объект бд в список постов
     user_posts = [txt['text'] for txt in user_posts]
     if user_id == current_user_id:
-        response = {'user_info': user_info, 'user_posts': user_posts, 'isMe': True}
+        response = {'user_info': user_info,
+                    'user_posts': user_posts, 'isMe': True}
     else:
-        response = {'user_info': user_info, 'user_posts': user_posts, 'isMe': False}
+        response = {'user_info': user_info,
+                    'user_posts': user_posts, 'isMe': False}
     return response
 
 # @app.route('/api/user', methods=['GET'])
@@ -313,6 +347,8 @@ def get_user(user_id): # сюда передается айди профиля �
 #     return response
 
 #  айди в урле можно принимать и сравнивать его с айди из куки, если они одинаковые то передавать флаг это я и тогда профиль будет иметь возможность редактирования
+
+
 @app.route('/api/user/<int:user_id>', methods=['POST', 'OPTIONS'])
 @jwt_required()  # использование декоратора для проверки токена
 def upd_user(user_id):
