@@ -3,7 +3,7 @@ import random
 
 from flask import Flask, make_response, request
 from flask_cors import CORS, cross_origin
-from flask_jwt_extended import create_access_token, create_refresh_token, JWTManager, jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token, create_refresh_token, JWTManager, jwt_required, get_jwt_identity, verify_jwt_in_request
 from werkzeug.security import generate_password_hash, check_password_hash
 import mongo
 
@@ -70,7 +70,7 @@ def login():
     # проверяем пароль
     if user['password'] == data['password']:
         # создаем токен, вынести в отдельную функцию
-        access_token = create_access_token(identity=user['id'], expires_delta=datetime.timedelta(minutes=15))
+        access_token = create_access_token(identity=user['id'], expires_delta=datetime.timedelta(seconds=15))
         refresh_token = create_refresh_token(identity=user['id'], expires_delta=datetime.timedelta(days=30))
         # после проверки пароля удаляю его из объекта юзера, перед ответом на клиент
         del user['password']
@@ -78,7 +78,7 @@ def login():
         # в остальных ответах фласк сам преобразует в json
         response = make_response({'user_obj': user, 'isAuth': True, 'access_token': access_token, 'refresh_token': refresh_token})
         # response.set_cookie('refresh_token', refresh_token, httponly=True, max_age=30*24*60*60, samesite='None', secure=True, path='/api')
-        response.set_cookie('token', refresh_token, httponly=True, max_age=30*24*60*60, samesite='None', secure=True, path='/api')
+        response.set_cookie('token', refresh_token, httponly=True, max_age=30*24*60*60, samesite='None', secure=True, path='/api') # попробовать секьюр флаг поменять
         return response
     # возвращаем ошибку
     print('Неверный пароль')
@@ -112,7 +112,7 @@ def logout():
 
 
 # защита эндпоинта для авторизованных пользователей
-@app.route('/protected')
+@app.route('/api/protected')
 @jwt_required()
 def protected():
     user_id = get_jwt_identity()
@@ -223,12 +223,14 @@ def get_users():
     return response
 
 
-@app.route('/api/user/<int:user_id>', methods=['GET', 'OPTIONS'])
+@app.route('/api/user/<int:user_id>', methods=['GET'])
 @jwt_required()  # использование декоратора для проверки токена
-def get_user(user_id):
+def get_user(user_id): # сюда передается айди профиля который мы просматриваем
     # получение идентификатора пользователя из токена тут получаю ошибку
-    # current_user_id = get_jwt_identity()
-    # print(current_user_id)
+    # verify_jwt_in_request()
+    current_user_id = get_jwt_identity() #  айди юзера из куки
+    print(f'current_user_id - {current_user_id}')
+    print(f'user_id - {user_id}')
     user_info = users_collection.find_one(
         {'id': user_id}, {'_id': 0, 'password': 0})
     user_posts = posts_collection.aggregate([
@@ -261,10 +263,56 @@ def get_user(user_id):
     user_info['posts_count'] = len(user_posts)
     # преобразовываем объект бд в список постов
     user_posts = [txt['text'] for txt in user_posts]
-    response = {'user_info': user_info, 'user_posts': user_posts}
+    if user_id == current_user_id:
+        response = {'user_info': user_info, 'user_posts': user_posts, 'isMe': True}
+    else:
+        response = {'user_info': user_info, 'user_posts': user_posts, 'isMe': False}
     return response
 
+# @app.route('/api/user', methods=['GET'])
+# @jwt_required()  # использование декоратора для проверки токена
+# def get_user():
+#     # получение идентификатора пользователя из токена тут получаю ошибку
+#     # verify_jwt_in_request()
+#     current_user_id = get_jwt_identity()
+#     print(f'current_user_id - {current_user_id}')
+#     user_info = users_collection.find_one(
+#         {'id': current_user_id}, {'_id': 0, 'password': 0})
+#     user_posts = posts_collection.aggregate([
+#         {
+#             '$lookup':
+#                 {
+#                     'from': "users",
+#                     'localField': "author",
+#                     'foreignField': "_id",
+#                     'as': "author_info"
+#                 }
+#         },
+#         {
+#             '$match': {
+#                 "author_info.id": current_user_id
+#             }
+#         },
+#         # исключение полей
+#         {
+#             '$project': {
+#                 'text': 1,
+#                 # 'rating': 1,
+#                 '_id': 0
+#             }
+#         }
+#     ])
+#     # создаём список из объекта бд
+#     user_posts = list(user_posts)
+#     # вычисляем и записываем количество постов в информацию о юзере
+#     user_info['posts_count'] = len(user_posts)
+#     # преобразовываем объект бд в список постов
+#     user_posts = [txt['text'] for txt in user_posts]
+#     response = {'user_info': user_info, 'user_posts': user_posts}
+#     print('user')
+#     return response
 
+#  айди в урле можно принимать и сравнивать его с айди из куки, если они одинаковые то передавать флаг это я и тогда профиль будет иметь возможность редактирования
 @app.route('/api/user/<int:user_id>', methods=['POST', 'OPTIONS'])
 @jwt_required()  # использование декоратора для проверки токена
 def upd_user(user_id):
