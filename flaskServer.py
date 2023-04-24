@@ -109,7 +109,7 @@ def refresh():
     user = users_collection.find_one({'id': current_user}, {'_id': 0, 'password': 0, 'statusText': 0, 'rating': 0})
     print(f'user - {user["refresh_token"]}')
     
-    # !!!! из-за 2х запросов подряд токен не успевает обновится в куках и кука призодит со старым токеном а в бд уже новый
+    # !!!! из-за 2х запросов подряд  к рефрешу токен не успевает обновится в куках и кука призодит со старым токеном а в бд уже новый
     # проверка токена с токеном из бд
     # if token != user['refresh_token']:
     #     return {'message': 'No valid token'}
