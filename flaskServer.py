@@ -72,7 +72,7 @@ def login():
     if user['password'] == data['password']:
         # создаем токен, вынести в отдельную функцию
         access_token = create_access_token(
-            identity=user['id'], expires_delta=datetime.timedelta(seconds=15))
+            identity=user['id'], expires_delta=datetime.timedelta(seconds=5))
         refresh_token = create_refresh_token(
             identity=user['id'], expires_delta=datetime.timedelta(days=30))
         # добавляем токен в бд
@@ -99,7 +99,7 @@ def login():
 def refresh():
     # получаем рефреш токен из куки
     token = request.cookies.get('token')
-    # print(f"cookie  -  {request.cookies.get('token')}")
+    print(f"cookie  -  {request.cookies.get('token')}")
 
     # получаем id юзера из токена 
     current_user = get_jwt_identity()
@@ -107,16 +107,18 @@ def refresh():
 
     # получаем данные юзера
     user = users_collection.find_one({'id': current_user}, {'_id': 0, 'password': 0, 'statusText': 0, 'rating': 0})
+    print(f'user - {user["refresh_token"]}')
     
+    # !!!! из-за 2х запросов подряд токен не успевает обновится в куках и кука призодит со старым токеном а в бд уже новый
     # проверка токена с токеном из бд
-    if token != user['refresh_token']:
-        return {'message': 'No valid token'}
+    # if token != user['refresh_token']:
+    #     return {'message': 'No valid token'}
 
     # после проверки токена удаляю его из объекта юзера, перед ответом на клиент
     del user['refresh_token']
 
     new_access_token = create_access_token(
-        identity=current_user, expires_delta=datetime.timedelta(seconds=15))
+        identity=current_user, expires_delta=datetime.timedelta(seconds=5))
     new_refresh_token = create_refresh_token(
         identity=current_user, expires_delta=datetime.timedelta(days=30))
     print('новые токены сгенерированы')
@@ -140,7 +142,9 @@ def logout():
     current_user = get_jwt_identity()
     # затираем токен в бд
     users_collection.update_one({'id': current_user}, {'$set': {'refresh_token': ''}})
-    return {'message': 'User logged out successfully'}
+    response = make_response({'message': 'User logged out successfully'})
+    response.delete_cookie('token')
+    return response
 
 
 # защита эндпоинта для авторизованных пользователей
@@ -240,7 +244,7 @@ def add_post():
     return {'isCreate': True}
 
 
-@app.route('/api/users', methods=['GET', 'OPTIONS'])
+@app.route('/api/users', methods=['GET'])
 # @jwt_required(locations=['headers', 'cookies'])
 @jwt_required()
 def get_users():
@@ -353,6 +357,9 @@ def get_user(user_id):  # сюда передается айди профиля 
 @jwt_required()  # использование декоратора для проверки токена
 def upd_user(user_id):
     # получаем данные из запроса
+
+    # добавить проверку токена, если юзер вышел то нужно запретить отправку нового статуса
+
     data = request.json
     status_text = data['statusText']
     print(f'status_text - {status_text}')
