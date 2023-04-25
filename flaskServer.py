@@ -166,6 +166,8 @@ def get_posts():
     page = int(request.args.get('page', 1))
     page_size = int(request.args.get('page_size', 2))
 
+# добавить поле дата создания и тогда по ней можно сортироваться
+
     # операция агрегации
     pipeline = [
         # поиск всех постов с информацией об авторе
@@ -184,11 +186,13 @@ def get_posts():
         # сортировка по дате создания в порядке убывания
         {
             '$sort': {
-                'created_at': -1
+                # 'created_at': -1
+                'id': -1
             }
         },
         # пропуск документов для реализации пагинации
         {
+            # '$skip': page_size
             '$skip': (page - 1) * page_size
         },
         # ограничение количества выдаваемых документов
@@ -210,6 +214,7 @@ def get_posts():
 
     # выполнение операции агрегации
     result = posts_collection.aggregate(pipeline)
+    print(posts_collection.find({}))
     count = posts_collection.count_documents({})
     posts = [post for post in result]
     response = {'posts': posts, 'count': count}
