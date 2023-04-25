@@ -221,8 +221,8 @@ def get_posts():
 @app.route('/api/posts', methods=['POST'])
 @jwt_required()
 def add_post():
+    author_id = get_jwt_identity()  # айди юзера из куки
     post_data = request.json
-    author_id = post_data['author_id']
     post_text = post_data['text']
     print(f'id - {author_id}   msg - {post_text}')
     # получаем автора поста из коллекции users
