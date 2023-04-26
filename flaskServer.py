@@ -8,6 +8,7 @@ from flask_jwt_extended import create_access_token, create_refresh_token, JWTMan
 from werkzeug.security import generate_password_hash, check_password_hash
 from api import api
 from api.views.get_posts import api_get_posts
+from api.views.post_rating import api_post_rating
 
 # переменные из файла mongo.py
 from mongo import users_collection, posts_collection
@@ -22,6 +23,9 @@ api = Blueprint('api', __name__)
 app.register_blueprint(api, url_prefix='/api')
 # получение постов
 app.register_blueprint(api_get_posts, url_prefix='/api')
+# изменение рейтинга поста
+app.register_blueprint(api_post_rating, url_prefix='/api')
+
 
 # задаем секретный ключ для подписи токена
 app.config['JWT_SECRET_KEY'] = '23sa3501080X'
