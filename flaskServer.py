@@ -1,19 +1,27 @@
 import datetime
 import random
 
+from flask import Blueprint
 from flask import Flask, make_response, request
 from flask_cors import CORS, cross_origin
 from flask_jwt_extended import create_access_token, create_refresh_token, JWTManager, jwt_required, get_jwt_identity, verify_jwt_in_request
 from werkzeug.security import generate_password_hash, check_password_hash
-import mongo
+from api import api
+from api.views.get_posts import api_get_posts
 
 # переменные из файла mongo.py
-users_collection = mongo.users
-posts_collection = mongo.posts
+from mongo import users_collection, posts_collection
+
 
 app = Flask(__name__)
 app.secret_key = 'mysecretkey'
 CORS(app, supports_credentials=True)
+api = Blueprint('api', __name__)
+
+# регистрируем blueprint
+app.register_blueprint(api, url_prefix='/api')
+# получение постов
+app.register_blueprint(api_get_posts, url_prefix='/api')
 
 # задаем секретный ключ для подписи токена
 app.config['JWT_SECRET_KEY'] = '23sa3501080X'
@@ -161,65 +169,65 @@ def protected():
 
 
 # получение постов
-@app.route('/api/posts', methods=['GET', 'OPTIONS'])
-def get_posts():
-    page = int(request.args.get('page', 1))
-    page_size = int(request.args.get('page_size', 2))
+# @app.route('/api/posts', methods=['GET', 'OPTIONS'])
+# def get_posts():
+#     page = int(request.args.get('page', 1))
+#     page_size = int(request.args.get('page_size', 2))
 
-# добавить поле дата создания и тогда по ней можно сортироваться
+# # добавить поле дата создания и тогда по ней можно сортироваться
 
-    # операция агрегации
-    pipeline = [
-        # поиск всех постов с информацией об авторе
-        {
-            '$lookup': {
-                'from': 'users',
-                'localField': 'author',
-                'foreignField': '_id',
-                'as': 'author'
-            }
-        },
-        # объединение данных о посте и авторе
-        {
-            '$unwind': '$author'
-        },
-        # сортировка по дате создания в порядке убывания
-        {
-            '$sort': {
-                # 'created_at': -1
-                'id': -1
-            }
-        },
-        # пропуск документов для реализации пагинации
-        {
-            # '$skip': page_size
-            '$skip': (page - 1) * page_size
-        },
-        # ограничение количества выдаваемых документов
-        {
-            '$limit': page_size
-        },
-        # исключение поля "_id" из документа автора
-        {
-            '$project': {
-                'text': 1,
-                'rating': 1,
-                'author.username': 1,
-                'author.img': 1,
-                'author.id': 1,
-                '_id': 0
-            }
-        }
-    ]
+#     # операция агрегации
+#     pipeline = [
+#         # поиск всех постов с информацией об авторе
+#         {
+#             '$lookup': {
+#                 'from': 'users',
+#                 'localField': 'author',
+#                 'foreignField': '_id',
+#                 'as': 'author'
+#             }
+#         },
+#         # объединение данных о посте и авторе
+#         {
+#             '$unwind': '$author'
+#         },
+#         # сортировка по дате создания в порядке убывания
+#         {
+#             '$sort': {
+#                 # 'created_at': -1
+#                 'id': -1
+#             }
+#         },
+#         # пропуск документов для реализации пагинации
+#         {
+#             # '$skip': page_size
+#             '$skip': (page - 1) * page_size
+#         },
+#         # ограничение количества выдаваемых документов
+#         {
+#             '$limit': page_size
+#         },
+#         # исключение поля "_id" из документа автора
+#         {
+#             '$project': {
+#                 'text': 1,
+#                 'rating': 1,
+#                 'author.username': 1,
+#                 'author.img': 1,
+#                 'author.id': 1,
+#                 '_id': 0
+#             }
+#         }
+#     ]
 
-    # выполнение операции агрегации
-    result = posts_collection.aggregate(pipeline)
-    print(posts_collection.find({}))
-    count = posts_collection.count_documents({})
-    posts = [post for post in result]
-    response = {'posts': posts, 'count': count}
-    # response.set_cookie('test', 'test', samesite='None', secure=True)
-    return response
+#     # выполнение операции агрегации
+#     result = posts_collection.aggregate(pipeline)
+#     print(posts_collection.find({}))
+#     count = posts_collection.count_documents({})
+#     posts = [post for post in result]
+#     response = {'posts': posts, 'count': count}
+#     # response.set_cookie('test', 'test', samesite='None', secure=True)
+#     return response
 
 
 # добавление поста
@@ -358,7 +366,7 @@ def get_user(user_id):  # сюда передается айди профиля 
 #  айди в урле можно принимать и сравнивать его с айди из куки, если они одинаковые то передавать флаг это я и тогда профиль будет иметь возможность редактирования
 
 
-@app.route('/api/user/<int:user_id>', methods=['POST', 'OPTIONS'])
+@app.route('/api/user/<int:user_id>', methods=['POST', 'OPTIONS'])  # исправить передачу айди юзера
 @jwt_required()  # использование декоратора для проверки токена
 def upd_user(user_id):
     # получаем данные из запроса

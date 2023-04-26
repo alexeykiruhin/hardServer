@@ -7,7 +7,7 @@ client = MongoClient('mongodb://localhost:27017/')
 db = client['content_site']
 
 # выбираем коллекцию пользователей
-users = db['users']
+users_collection = db['users']
 
 # выбираем коллекцию постов
-posts = db['posts']
+posts_collection = db['posts']
