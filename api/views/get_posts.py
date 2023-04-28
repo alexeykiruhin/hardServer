@@ -64,6 +64,5 @@ def get_posts():
     count = posts_collection.count_documents({})
     posts = [post for post in result]
     response = {'posts': posts, 'count': count}
-    print(posts)
     # response.set_cookie('test', 'test', samesite='None', secure=True)
     return response

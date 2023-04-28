@@ -111,7 +111,7 @@ def login():
 def refresh():
     # получаем рефреш токен из куки
     token = request.cookies.get('token')
-    print(f"cookie  -  {request.cookies.get('token')}")
+    # print(f"cookie  -  {request.cookies.get('token')}")
 
     # получаем id юзера из токена 
     current_user = get_jwt_identity()
@@ -119,7 +119,7 @@ def refresh():
 
     # получаем данные юзера
     user = users_collection.find_one({'id': current_user}, {'_id': 0, 'password': 0, 'statusText': 0, 'rating': 0})
-    print(f'user - {user["refresh_token"]}')
+    # print(f'user - {user["refresh_token"]}')
     
     # !!!! из-за 2х запросов подряд  к рефрешу токен не успевает обновится в куках и кука призодит со старым токеном а в бд уже новый
     # проверка токена с токеном из бд
