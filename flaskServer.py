@@ -251,7 +251,10 @@ def add_post():
     new_post = {
         "id": current_id,
         "text": post_text,
-        "rating": 100,
+        "rating": {
+            "result": 100,
+            "usersRated": []
+        },
         "author": author['_id']
     }
     # добавляем пост в бд

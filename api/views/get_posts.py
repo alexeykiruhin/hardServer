@@ -52,7 +52,8 @@ def get_posts():
                 'author.username': 1,
                 'author.img': 1,
                 'author.id': 1,
-                '_id': 0
+                '_id': 0,
+                'rating': {'result': 1}
             }
         }
     ]
