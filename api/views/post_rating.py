@@ -18,7 +18,14 @@ def post_rating():
     # знак оценки юзера ( 1 = + , 0 = -)
     score = data['score']
     try:
-        user_id = users_collection.find_one({'id': current_user}, {'_id': 1})
+        # находим юзера и забираем у него айди плюсы и минусы
+        user = users_collection.find_one({'id': current_user}, {'_id': 1, 'plus': 1, 'minus': 1})
+        user_id = user['_id'] # _id юзера
+        # print(user_id)
+        plus = user['plus'] # количество плюсов у юзера
+        minus = user['minus'] # количество минусов у юзера
+        # user_id = users_collection.find_one({'id': current_user}, {'_id': 1}) # _id юзера
+
         post_rating = posts_collection.find_one(
             {'id': post_id}, {'_id': 0, 'rating': {'result': 1}})
         # print(type(post_rating['rating']['result']))
@@ -31,12 +38,14 @@ def post_rating():
         # делаем запрос к бд с поиском поста
         isScore = posts_collection.find_one(
             {'id': post_id, 'rating.usersRated.userId': user_id}, {'rating.usersRated.score': 1})
+        # isScore = posts_collection.find_one(
+        #     {'id': post_id, 'rating.usersRated.userId': user_id}, {'rating.usersRated.score': 1})
         # если есть такой пост продолжаем работу, если нет возвращаем старый рейтинг
         if isScore:
             # print(f'score - {isScore}')
             # тут получаем список всех юзеров кто поставил оценку
             print(f'score - {isScore["rating"]["usersRated"][0]["score"]}')
-            print(f'user_id - {user_id["_id"]}')
+            print(f'user_id - {user_id}')
 
             if isScore["rating"]["usersRated"][0]["score"] == score:
                 print('РАВНО')
@@ -51,13 +60,22 @@ def post_rating():
                 posts_collection.update_one(
                     {"id": post_id},
                     {"$pull": {"rating.usersRated": {
-                        "userId._id": user_id["_id"]}}}
+                        "userId": user_id}}}
                 )
+
+                # так же удаляем эту оценку из документа юзерс (из счётчика оценок юзера)
+
+                if score > 0:
+                    users_collection.update_one({'_id': user_id}, {'$set': {'minus': minus - 1}})
+                else:
+                    users_collection.update_one({'_id': user_id}, {'$set': {'plus': plus - 1}})
+
 
                 # новое значение рейтинга зависит от оценки поставленной юзером
                 new_rating = rating + 1 if score > 0 else rating - 1
-                # обновляем рейтинг поста и записываем айди юзера кто поставил оценку
+                # обновляем рейтинг поста
                 posts_collection.update_one({'id': post_id}, {'$set': {"rating.result": new_rating}})
+            
                 response = {"new_rating": {"result": new_rating}}
 
         else:
@@ -67,6 +85,15 @@ def post_rating():
             # обновляем рейтинг поста и записываем айди юзера кто поставил оценку
             posts_collection.update_one({'id': post_id}, {'$set': {"rating.result": new_rating}, '$push': {
                 "rating.usersRated": {"userId": user_id, "score": score}}})
+            # posts_collection.update_one({'id': post_id}, {'$set': {"rating.result": new_rating}, '$push': {
+            #     "rating.usersRated": {"userId": user_id, "score": score}}})
+            
+            # добавляем эту оценку в счётчик оценок у юзера
+            if score > 0:
+                users_collection.update_one({'_id': user_id}, {'$set': {'plus': plus + 1}})
+            else:
+                users_collection.update_one({'_id': user_id}, {'$set': {'minus': minus + 1}})
+
             response = {"new_rating": {"result": new_rating}}
             return response
 
