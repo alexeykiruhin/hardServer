@@ -172,68 +172,6 @@ def protected():
     return response
 
 
-# получение постов
-# @app.route('/api/posts', methods=['GET', 'OPTIONS'])
-# def get_posts():
-#     page = int(request.args.get('page', 1))
-#     page_size = int(request.args.get('page_size', 2))
-
-# # добавить поле дата создания и тогда по ней можно сортироваться
-
-#     # операция агрегации
-#     pipeline = [
-#         # поиск всех постов с информацией об авторе
-#         {
-#             '$lookup': {
-#                 'from': 'users',
-#                 'localField': 'author',
-#                 'foreignField': '_id',
-#                 'as': 'author'
-#             }
-#         },
-#         # объединение данных о посте и авторе
-#         {
-#             '$unwind': '$author'
-#         },
-#         # сортировка по дате создания в порядке убывания
-#         {
-#             '$sort': {
-#                 # 'created_at': -1
-#                 'id': -1
-#             }
-#         },
-#         # пропуск документов для реализации пагинации
-#         {
-#             # '$skip': page_size
-#             '$skip': (page - 1) * page_size
-#         },
-#         # ограничение количества выдаваемых документов
-#         {
-#             '$limit': page_size
-#         },
-#         # исключение поля "_id" из документа автора
-#         {
-#             '$project': {
-#                 'text': 1,
-#                 'rating': 1,
-#                 'author.username': 1,
-#                 'author.img': 1,
-#                 'author.id': 1,
-#                 '_id': 0
-#             }
-#         }
-#     ]
-
-#     # выполнение операции агрегации
-#     result = posts_collection.aggregate(pipeline)
-#     print(posts_collection.find({}))
-#     count = posts_collection.count_documents({})
-#     posts = [post for post in result]
-#     response = {'posts': posts, 'count': count}
-#     # response.set_cookie('test', 'test', samesite='None', secure=True)
-#     return response
-
-
 # добавление поста
 @app.route('/api/posts', methods=['POST'])
 @jwt_required()
@@ -319,6 +257,7 @@ def get_user(user_id):  # сюда передается айди профиля 
     user_info['posts_count'] = len(user_posts)
     # преобразовываем объект бд в список постов
     user_posts = [txt['text'] for txt in user_posts]
+    #  айди в урле сравниваем с айди из куки, если они одинаковые то передавать флаг это я и тогда профиль будет иметь возможность редактирования
     if user_id == current_user_id:
         response = {'user_info': user_info,
                     'user_posts': user_posts, 'isMe': True}
@@ -326,51 +265,6 @@ def get_user(user_id):  # сюда передается айди профиля 
         response = {'user_info': user_info,
                     'user_posts': user_posts, 'isMe': False}
     return response
-
-# @app.route('/api/user', methods=['GET'])
-# @jwt_required()  # использование декоратора для проверки токена
-# def get_user():
-#     # получение идентификатора пользователя из токена тут получаю ошибку
-#     # verify_jwt_in_request()
-#     current_user_id = get_jwt_identity()
-#     print(f'current_user_id - {current_user_id}')
-#     user_info = users_collection.find_one(
-#         {'id': current_user_id}, {'_id': 0, 'password': 0})
-#     user_posts = posts_collection.aggregate([
-#         {
-#             '$lookup':
-#                 {
-#                     'from': "users",
-#                     'localField': "author",
-#                     'foreignField': "_id",
-#                     'as': "author_info"
-#                 }
-#         },
-#         {
-#             '$match': {
-#                 "author_info.id": current_user_id
-#             }
-#         },
-#         # исключение полей
-#         {
-#             '$project': {
-#                 'text': 1,
-#                 # 'rating': 1,
-#                 '_id': 0
-#             }
-#         }
-#     ])
-#     # создаём список из объекта бд
-#     user_posts = list(user_posts)
-#     # вычисляем и записываем количество постов в информацию о юзере
-#     user_info['posts_count'] = len(user_posts)
-#     # преобразовываем объект бд в список постов
-#     user_posts = [txt['text'] for txt in user_posts]
-#     response = {'user_info': user_info, 'user_posts': user_posts}
-#     print('user')
-#     return response
-
-#  айди в урле можно принимать и сравнивать его с айди из куки, если они одинаковые то передавать флаг это я и тогда профиль будет иметь возможность редактирования
 
 
 @app.route('/api/user/<int:user_id>', methods=['POST', 'OPTIONS'])  # исправить передачу айди юзера
