@@ -9,6 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from api import api
 from api.views.get_posts import api_get_posts
 from api.views.post_rating import api_post_rating
+from api.views.get_user import api_get_user
 
 # переменные из файла mongo.py
 from mongo import users_collection, posts_collection
@@ -25,6 +26,8 @@ app.register_blueprint(api, url_prefix='/api')
 app.register_blueprint(api_get_posts, url_prefix='/api')
 # изменение рейтинга поста
 app.register_blueprint(api_post_rating, url_prefix='/api')
+# получение юзера
+app.register_blueprint(api_get_user, url_prefix='/api')
 
 
 # задаем секретный ключ для подписи токена
@@ -37,7 +40,7 @@ app.config['JWT_REFRESH_COOKIE_NAME'] = 'token'
 jwt = JWTManager(app)  # инициализируем объект JWTManager
 
 
-# обработка запроса на регистрацию пользователя !не доделана
+# обработка запроса на регистрацию пользователя !не доделан хэш пароля
 @app.route('/api/register', methods=['POST'])
 def register():
     # получаем данные из запроса
@@ -214,56 +217,6 @@ def get_users():
         users_list.append(user)
     count = users_collection.count_documents({})
     response = {'users': users_list, 'count': count}
-    return response
-
-
-@app.route('/api/user/<int:user_id>', methods=['GET'])
-@jwt_required()  # использование декоратора для проверки токена
-def get_user(user_id):  # сюда передается айди профиля который мы просматриваем
-    # получение идентификатора пользователя из токена тут получаю ошибку
-    # verify_jwt_in_request()
-    current_user_id = get_jwt_identity()  # айди юзера из куки
-    print(f'current_user_id - {current_user_id}')
-    print(f'user_id - {user_id}')
-    user_info = users_collection.find_one(
-        {'id': user_id}, {'_id': 0, 'password': 0})
-    user_posts = posts_collection.aggregate([
-        {
-            '$lookup':
-                {
-                    'from': "users",
-                    'localField': "author",
-                    'foreignField': "_id",
-                    'as': "author_info"
-                }
-        },
-        {
-            '$match': {
-                "author_info.id": user_id
-            }
-        },
-        # исключение полей
-        {
-            '$project': {
-                'text': 1,
-                # 'rating': 1,
-                '_id': 0
-            }
-        }
-    ])
-    # создаём список из объекта бд
-    user_posts = list(user_posts)
-    # вычисляем и записываем количество постов в информацию о юзере
-    user_info['posts_count'] = len(user_posts)
-    # преобразовываем объект бд в список постов
-    user_posts = [txt['text'] for txt in user_posts]
-    #  айди в урле сравниваем с айди из куки, если они одинаковые то передавать флаг это я и тогда профиль будет иметь возможность редактирования
-    if user_id == current_user_id:
-        response = {'user_info': user_info,
-                    'user_posts': user_posts, 'isMe': True}
-    else:
-        response = {'user_info': user_info,
-                    'user_posts': user_posts, 'isMe': False}
     return response
 
 

@@ -1,9 +1,9 @@
 #  изменение рейтинга поста
-from mongo import users_collection, posts_collection
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask import Blueprint, request
 api_post_rating = Blueprint('api_post_rating', __name__)
 # переменные из файла mongo.py
+from mongo import users_collection, posts_collection
 
 
 @api_post_rating.route('/post_rating', methods=['PUT'])
