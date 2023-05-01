@@ -13,10 +13,14 @@ def get_user(user_id):  # сюда передается айди профиля 
     # получение идентификатора пользователя из токена тут получаю ошибку
     # verify_jwt_in_request()
     current_user_id = get_jwt_identity()  # айди юзера из куки
-    print(f'current_user_id - {current_user_id}')
-    print(f'user_id - {user_id}')
+    # print(f'current_user_id - {current_user_id}')
+    # print(f'user_id - {user_id}')
     user_info = users_collection.find_one(
         {'id': user_id}, {'_id': 0, 'password': 0})
+    # проверка подписан ли юзер на юзера на чью страницу зашел
+    is_bubscribed = True if current_user_id in user_info['subscribers'] else False
+    # записываем в юзерс инфо значение о подписке
+    user_info['is_sub'] = is_bubscribed
     # подсчитываем количество подписчиков
     user_info['subscribers'] = len(user_info['subscribers'])
 
@@ -56,7 +60,11 @@ def get_user(user_id):  # сюда передается айди профиля 
     #  айди в урле сравниваем с айди из куки, если они одинаковые то передавать
     #  флаг это я и тогда профиль будет иметь возможность редактирования
     is_me = True if user_id == current_user_id else False
+
+    
     print(f'info - {user_info}')
+
+
     response = {
             'user_info': user_info,
             'user_posts': user_posts,

@@ -11,6 +11,7 @@ from api.views.get_posts import api_get_posts
 from api.views.post_rating import api_post_rating
 from api.views.get_user import api_get_user
 from api.views.subscribe import api_subscribe
+from api.views.unsubscribe import api_unsubscribe
 
 # переменные из файла mongo.py
 from mongo import users_collection, posts_collection
@@ -31,6 +32,8 @@ app.register_blueprint(api_post_rating, url_prefix='/api')
 app.register_blueprint(api_get_user, url_prefix='/api')
 # подписка на юзера
 app.register_blueprint(api_subscribe, url_prefix='/api')
+# отписка от юзера
+app.register_blueprint(api_unsubscribe, url_prefix='/api')
 
 
 # задаем секретный ключ для подписи токена
