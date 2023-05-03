@@ -13,6 +13,7 @@ from api.views.get_user import api_get_user
 from api.views.subscribe import api_subscribe
 from api.views.unsubscribe import api_unsubscribe
 from api.views.get_subs_posts import api_get_subs_posts
+from api.views.get_postView import api_get_postView
 
 # переменные из файла mongo.py
 from mongo import users_collection, posts_collection
@@ -37,6 +38,8 @@ app.register_blueprint(api_subscribe, url_prefix='/api')
 app.register_blueprint(api_unsubscribe, url_prefix='/api')
 # получение постов от авторов на которых подписан
 app.register_blueprint(api_get_subs_posts, url_prefix='/api')
+# получение поста для расшириного просмотра
+app.register_blueprint(api_get_postView, url_prefix='/api')
 
 
 # задаем секретный ключ для подписи токена
@@ -214,7 +217,7 @@ def add_post():
     return {'isCreate': True}
 
 
-@app.route('/api/users', methods=['GET'])
+@app.route('/api/users', methods=['GET']) # добавить выдачу юзеров постранично
 # @jwt_required(locations=['headers', 'cookies'])
 @jwt_required()
 def get_users():
