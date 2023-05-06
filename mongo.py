@@ -11,3 +11,6 @@ users_collection = db['users']
 
 # выбираем коллекцию постов
 posts_collection = db['posts']
+
+# выбираем коллекцию комментариев
+comments_collection = db['comments']
