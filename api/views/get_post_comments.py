@@ -44,7 +44,7 @@ def get_post_comments(post_id):  # сюда передается айди пос
         }
     ])
     # собираем результат в список и отдаем
-    out = [p for p in comments]
+    out = [c for c in comments]
     response = {    
             'comments': out
         }

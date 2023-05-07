@@ -15,6 +15,8 @@ from api.views.unsubscribe import api_unsubscribe
 from api.views.get_subs_posts import api_get_subs_posts
 from api.views.get_post_view import api_get_post_view
 from api.views.get_post_comments import api_get_post_comments
+from api.views.add_post import api_add_post
+from api.views.add_comment import api_add_comment
 
 # переменные из файла mongo.py
 from mongo import users_collection, posts_collection
@@ -27,6 +29,8 @@ api = Blueprint('api', __name__)
 
 # регистрируем blueprint
 app.register_blueprint(api, url_prefix='/api')
+# добавление поста
+app.register_blueprint(api_add_post, url_prefix='/api')
 # получение постов
 app.register_blueprint(api_get_posts, url_prefix='/api')
 # изменение рейтинга поста
@@ -43,6 +47,8 @@ app.register_blueprint(api_get_subs_posts, url_prefix='/api')
 app.register_blueprint(api_get_post_view, url_prefix='/api')
 # получение комментариев для расшириного просмотра
 app.register_blueprint(api_get_post_comments, url_prefix='/api')
+# добавление комментария
+app.register_blueprint(api_add_comment, url_prefix='/api')
 
 
 # задаем секретный ключ для подписи токена
@@ -188,36 +194,6 @@ def protected():
     response = {'user_obj': user_obj, 'isAuth': True}
     print('protected')
     return response
-
-
-# добавление поста
-@app.route('/api/posts', methods=['POST'])
-@jwt_required()
-def add_post():
-    author_id = get_jwt_identity()  # айди юзера из куки
-    post_data = request.json
-    post_text = post_data['text']
-    print(f'id - {author_id}   msg - {post_text}')
-    # получаем автора поста из коллекции users
-    author = users_collection.find_one({'id': author_id}, {'_id': 1})
-    print(author)
-
-    # создаем новый документ в коллекции posts
-    current_id = posts_collection.count_documents({}) + 1
-    new_post = {
-        "id": current_id,
-        "text": post_text,
-        "rating": {
-            "result": 100,
-            "usersRated": []
-        },
-        "author": author['_id']
-    }
-    # добавляем пост в бд
-    posts_collection.insert_one(new_post)
-
-    # возвращаем флаг создания поста
-    return {'isCreate': True}
 
 
 @app.route('/api/users', methods=['GET']) # добавить выдачу юзеров постранично
