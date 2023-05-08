@@ -1,5 +1,5 @@
 # добавление комментария
-from datetime import datetime
+import datetime
 from flask import Blueprint, make_response, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 api_add_comment = Blueprint('api_add_comment', __name__)
@@ -31,7 +31,7 @@ def add_comment():
         "author_id": author['_id'],
         "post_id": real_post_id,
         "comment_text": comment_text,
-        "created_at": datetime.now()
+        "created_at": datetime.datetime.now()
     }
     # добавляем коммент в бд
     out = comments_collection.insert_one(new_comment)
