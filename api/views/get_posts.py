@@ -7,8 +7,8 @@ from mongo import posts_collection
 
 @api_get_posts.route('/posts', methods=['GET', 'OPTIONS'])
 def get_posts():
-    page = int(request.args.get('page', 1))
-    page_size = int(request.args.get('page_size', 2))
+    page = int(request.args.get('page'))
+    page_size = int(request.args.get('page_size'))
 
 # добавить поле дата создания и тогда по ней можно сортироваться
 
