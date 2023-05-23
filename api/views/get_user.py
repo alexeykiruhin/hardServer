@@ -1,5 +1,5 @@
 # получение юзера
-from flask import Blueprint, request
+from flask import Blueprint, make_response, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 api_get_user = Blueprint('api_get_user', __name__)
 # переменные из файла mongo.py
@@ -45,7 +45,8 @@ def get_user(user_id):  # сюда передается айди профиля 
                 'text': 1,
                 # вытаскиваем ещё и рейтинг поста потом ниже его суммируем и отдаём
                 'rating.result': 1,
-                '_id': 0
+                '_id': 0,
+                'id': 1
             }
         }
     ])
@@ -56,7 +57,8 @@ def get_user(user_id):  # сюда передается айди профиля 
     # вычисляем и записываем количество постов в информацию о юзере
     user_info['posts_count'] = len(user_posts)
     # преобразовываем объект бд в список постов
-    user_posts = [txt['text'] for txt in user_posts]
+    user_posts = [[txt['text'], txt['id']] for txt in user_posts]
+    print(user_posts)
     #  айди в урле сравниваем с айди из куки, если они одинаковые то передавать
     #  флаг это я и тогда профиль будет иметь возможность редактирования
     is_me = True if user_id == current_user_id else False
@@ -65,10 +67,10 @@ def get_user(user_id):  # сюда передается айди профиля 
     print(f'info - {user_info}')
 
 
-    response = {
+    response = make_response({
             'user_info': user_info,
             'user_posts': user_posts,
             'all_rating': all_rating,
             'isMe': is_me
-        }
+        })
     return response

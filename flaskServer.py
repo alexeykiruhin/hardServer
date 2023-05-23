@@ -17,6 +17,7 @@ from api.views.get_post_view import api_get_post_view
 from api.views.get_post_comments import api_get_post_comments
 from api.views.add_post import api_add_post
 from api.views.add_comment import api_add_comment
+from api.views.del_post import api_del_post
 
 # переменные из файла mongo.py
 from mongo import users_collection, posts_collection
@@ -49,6 +50,9 @@ app.register_blueprint(api_get_post_view, url_prefix='/api')
 app.register_blueprint(api_get_post_comments, url_prefix='/api')
 # добавление комментария
 app.register_blueprint(api_add_comment, url_prefix='/api')
+# удаление поста
+app.register_blueprint(api_del_post, url_prefix='/api')
+
 
 
 # задаем секретный ключ для подписи токена
