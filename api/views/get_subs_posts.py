@@ -29,6 +29,15 @@ def get_subs_posts():
                 'as': 'author'
             }
         },
+        # получаем теги поста
+        {
+            '$lookup': {
+                'from': 'tags',
+                'localField': 'tags',
+                'foreignField': '_id',
+                'as': 'tags'
+            }
+        },
         {
             "$match": {
                 "author.subscribers": {"$in": [current_user]}
@@ -65,7 +74,8 @@ def get_subs_posts():
                 'author.img': 1,
                 'author.id': 1,
                 '_id': 0,
-                'rating': {'result': 1}
+                'rating': {'result': 1},
+                'tags.tag_name': 1
             }
         }
     ]
