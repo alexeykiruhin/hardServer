@@ -15,12 +15,23 @@ def get_posts():
     # операция агрегации
     pipeline = [
         # поиск всех постов с информацией об авторе
+
+        # получаем автора поста
         {
             '$lookup': {
                 'from': 'users',
                 'localField': 'author',
                 'foreignField': '_id',
                 'as': 'author'
+            }
+        },
+        # получаем теги поста
+        {
+            '$lookup': {
+                'from': 'tags',
+                'localField': 'tags',
+                'foreignField': '_id',
+                'as': 'tags'
             }
         },
         # объединение данных о посте и авторе
@@ -53,7 +64,8 @@ def get_posts():
                 'author.img': 1,
                 'author.id': 1,
                 '_id': 0,
-                'rating': {'result': 1}
+                'rating': {'result': 1},
+                'tags.tag_name': 1
             }
         }
     ]
