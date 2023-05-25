@@ -14,3 +14,6 @@ posts_collection = db['posts']
 
 # выбираем коллекцию комментариев
 comments_collection = db['comments']
+
+# выбираем коллекцию тегов
+tags_collection = db['tags']
