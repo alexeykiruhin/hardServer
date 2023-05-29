@@ -22,6 +22,15 @@ def get_post_view(post_id):
                     'as': "author"
                 }
         },# объединение данных о посте и авторе
+        # получаем теги поста
+        {
+            '$lookup': {
+                'from': 'tags',
+                'localField': 'tags',
+                'foreignField': '_id',
+                'as': 'tags'
+            }
+        },
         {
             '$unwind': '$author'
         },
@@ -40,7 +49,8 @@ def get_post_view(post_id):
                 'author.img': 1,
                 'author.id': 1,
                 '_id': 0,
-                'rating': {'result': 1}
+                'rating': {'result': 1},
+                'tags.tag_name': 1
             }
         }
     ])
