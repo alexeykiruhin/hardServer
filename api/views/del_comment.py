@@ -17,9 +17,9 @@ def del_post():
     data = request.json
     comment_id = data['comment_id']
     decode_id = '{"$oid": "' + comment_id + '"}'
-    print(f'comment_id - {json_util.loads(decode_id)}')
+    decode_id = json_util.loads(decode_id)
     try:
-        comments_collection.delete_one({'_id': json_util.loads(decode_id)})
+        comments_collection.delete_one({'_id': decode_id})
         response = {'statusDeletePost': True}
     except:
         response = {'statusDeletePost': False}
