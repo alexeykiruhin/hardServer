@@ -21,6 +21,7 @@ from api.views.del_post import api_del_post
 from api.views.edit_post import api_edit_post
 from api.views.edit_comment import api_edit_comment
 from api.views.del_comment import api_del_сomment
+from api.views.get_users import api_get_users
 
 # переменные из файла mongo.py
 from mongo import users_collection, posts_collection
@@ -61,6 +62,8 @@ app.register_blueprint(api_edit_post, url_prefix='/api')
 app.register_blueprint(api_edit_comment, url_prefix='/api')
 # удаление комментария
 app.register_blueprint(api_del_сomment, url_prefix='/api')
+# получение юзеров
+app.register_blueprint(api_get_users, url_prefix='/api')
 
 
 
@@ -206,21 +209,6 @@ def protected():
     del user_obj['password']
     response = {'user_obj': user_obj, 'isAuth': True}
     print('protected')
-    return response
-
-
-@app.route('/api/users', methods=['GET']) # добавить выдачу юзеров постранично
-# @jwt_required(locations=['headers', 'cookies'])
-@jwt_required()
-def get_users():
-    # ошибку с ними получаю
-    # current_user_id = get_jwt_identity()
-    # print(current_user_id)
-    users_list = []
-    for user in users_collection.find({}, {'_id': 0, 'password': 0}):
-        users_list.append(user)
-    count = users_collection.count_documents({})
-    response = {'users': users_list, 'count': count}
     return response
 
 
