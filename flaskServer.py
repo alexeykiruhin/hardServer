@@ -19,6 +19,8 @@ from api.views.add_post import api_add_post
 from api.views.add_comment import api_add_comment
 from api.views.del_post import api_del_post
 from api.views.edit_post import api_edit_post
+from api.views.edit_comment import api_edit_comment
+from api.views.del_comment import api_del_сomment
 
 # переменные из файла mongo.py
 from mongo import users_collection, posts_collection
@@ -55,6 +57,10 @@ app.register_blueprint(api_add_comment, url_prefix='/api')
 app.register_blueprint(api_del_post, url_prefix='/api')
 # редактирование поста
 app.register_blueprint(api_edit_post, url_prefix='/api')
+# редактирование комментария
+app.register_blueprint(api_edit_comment, url_prefix='/api')
+# удаление комментария
+app.register_blueprint(api_del_сomment, url_prefix='/api')
 
 
 
