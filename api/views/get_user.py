@@ -24,6 +24,7 @@ def get_user(user_id):  # сюда передается айди профиля 
     # подсчитываем количество подписчиков
     user_info['subscribers'] = len(user_info['subscribers'])
 
+    print(user_id)
     user_posts = posts_collection.aggregate([
         {
             '$lookup':

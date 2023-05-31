@@ -41,7 +41,7 @@ def add_post():
         "id": current_id,
         "text": post_text,
         "rating": {
-            "result": 100,
+            "result": 0,
             "usersRated": []
         },
         "author": author['_id'],
