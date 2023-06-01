@@ -22,6 +22,7 @@ from api.views.edit_post import api_edit_post
 from api.views.edit_comment import api_edit_comment
 from api.views.del_comment import api_del_сomment
 from api.views.get_users import api_get_users
+from api.views.search import api_search
 
 # переменные из файла mongo.py
 from mongo import users_collection, posts_collection
@@ -64,6 +65,8 @@ app.register_blueprint(api_edit_comment, url_prefix='/api')
 app.register_blueprint(api_del_сomment, url_prefix='/api')
 # получение юзеров
 app.register_blueprint(api_get_users, url_prefix='/api')
+# получение юзеров
+app.register_blueprint(api_search, url_prefix='/api')
 
 
 
