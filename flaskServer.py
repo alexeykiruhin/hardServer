@@ -4,12 +4,14 @@ import random
 from flask import Blueprint
 from flask import Flask, make_response, request
 from flask_cors import CORS, cross_origin
-from flask_jwt_extended import create_access_token, create_refresh_token, JWTManager, jwt_required, get_jwt_identity, verify_jwt_in_request
+from flask_jwt_extended import create_access_token, create_refresh_token, JWTManager, jwt_required, get_jwt_identity, \
+    verify_jwt_in_request
 from werkzeug.security import generate_password_hash, check_password_hash
 from api import api
 from api.views.get_posts import api_get_posts
 from api.views.post_rating import api_post_rating
 from api.views.get_user import api_get_user
+from api.views.refresh import api_refresh
 from api.views.subscribe import api_subscribe
 from api.views.unsubscribe import api_unsubscribe
 from api.views.get_subs_posts import api_get_subs_posts
@@ -26,7 +28,6 @@ from api.views.search import api_search
 
 # переменные из файла mongo.py
 from mongo import users_collection, posts_collection
-
 
 app = Flask(__name__)
 app.secret_key = 'mysecretkey'
@@ -67,8 +68,8 @@ app.register_blueprint(api_del_сomment, url_prefix='/api')
 app.register_blueprint(api_get_users, url_prefix='/api')
 # получение юзеров
 app.register_blueprint(api_search, url_prefix='/api')
-
-
+# рефреш
+app.register_blueprint(api_refresh, url_prefix='/api')
 
 # задаем секретный ключ для подписи токена
 app.config['JWT_SECRET_KEY'] = '23sa3501080X'
@@ -119,7 +120,7 @@ def login():
     data = request.json
     # ищем пользователя в базе данных
     user = users_collection.find_one({'username': data['username']}, {
-                                     '_id': 0, 'statusText': 0, 'rating': 0, 'refresh_token': 0})
+        '_id': 0, 'statusText': 0, 'rating': 0, 'refresh_token': 0})
     if user is None:
         print(f'Пользователя с логином {data["username"]} не существует')
         return {'messageError': f'Пользователя с логином {data["username"]} не существует'}, 401
@@ -132,15 +133,15 @@ def login():
             identity=user['id'], expires_delta=datetime.timedelta(days=30))
         # добавляем токен в бд
         users_collection.update_one({'username': data['username']}, {
-                                    '$set': {'refresh_token': refresh_token}})
+            '$set': {'refresh_token': refresh_token}})
         # после проверки пароля удаляю его из объекта юзера, перед ответом на клиент
         del user['password']
         # тут использую make_response т.к. set_cookie метод объекта response без него получаю ошибку 'dict' object has no attribute 'set_cookie'
         # в остальных ответах фласк сам преобразует в json
         response = make_response({'user_obj': user, 'isAuth': True,
-                                 'access_token': access_token, 'refresh_token': refresh_token})
+                                  'access_token': access_token, 'refresh_token': refresh_token})
         # response.set_cookie('refresh_token', refresh_token, httponly=True, max_age=30*24*60*60, samesite='None', secure=True, path='/api')
-        response.set_cookie('token', refresh_token, httponly=True, max_age=30*24*60*60,
+        response.set_cookie('token', refresh_token, httponly=True, max_age=30 * 24 * 60 * 60,
                             samesite='None', secure=True, path='/api')  # попробовать секьюр флаг поменять
         return response
     # возвращаем ошибку
@@ -149,44 +150,44 @@ def login():
 
 
 # Эндпоинт для обновления access token по refresh token
-@app.route('/api/refresh', methods=['GET'])
-@jwt_required(refresh=True)
-def refresh():
-    # получаем рефреш токен из куки
-    token = request.cookies.get('token')
-    # print(f"cookie  -  {request.cookies.get('token')}")
-
-    # получаем id юзера из токена 
-    current_user = get_jwt_identity()
-    # print(f'user - {current_user}')
-
-    # получаем данные юзера
-    user = users_collection.find_one({'id': current_user}, {'_id': 0, 'password': 0, 'statusText': 0, 'rating': 0})
-    # print(f'user - {user["refresh_token"]}')
-    
-    # !!!! из-за 2х запросов подряд  к рефрешу токен не успевает обновится в куках и кука призодит со старым токеном а в бд уже новый
-    # проверка токена с токеном из бд
-    # if token != user['refresh_token']:
-    #     return {'message': 'No valid token'}
-
-    # после проверки токена удаляю его из объекта юзера, перед ответом на клиент
-    del user['refresh_token']
-
-    new_access_token = create_access_token(
-        identity=current_user, expires_delta=datetime.timedelta(seconds=5))
-    new_refresh_token = create_refresh_token(
-        identity=current_user, expires_delta=datetime.timedelta(days=30))
-    print('новые токены сгенерированы')
-
-    # обновляем токен в бд
-    users_collection.update_one({'id': current_user}, {'$set': {'refresh_token': new_refresh_token}})
-    # тут использую make_response т.к. set_cookie метод объекта response без него получаю ошибку 'dict' object has no attribute 'set_cookie'
-    # в остальных ответах фласк сам преобразует в json
-    response = make_response(
-        {'user_obj': user, 'isAuth': True, 'access_token': new_access_token})
-    response.set_cookie('token', new_refresh_token, httponly=True,
-                        max_age=30*24*60*60, samesite='None', secure=True, path='/api')
-    return response
+# @app.route('/api/refresh', methods=['GET'])
+# @jwt_required(refresh=True)
+# def refresh():
+#     # получаем рефреш токен из куки
+#     token = request.cookies.get('token')
+#     # print(f"cookie  -  {request.cookies.get('token')}")
+#
+#     # получаем id юзера из токена
+#     current_user = get_jwt_identity()
+#     # print(f'user - {current_user}')
+#
+#     # получаем данные юзера
+#     user = users_collection.find_one({'id': current_user}, {'_id': 0, 'password': 0, 'statusText': 0, 'rating': 0})
+#     # print(f'user - {user["refresh_token"]}')
+#
+#     # !!!! из-за 2х запросов подряд  к рефрешу токен не успевает обновится в куках и кука призодит со старым токеном а в бд уже новый
+#     # проверка токена с токеном из бд
+#     # if token != user['refresh_token']:
+#     #     return {'message': 'No valid token'}
+#
+#     # после проверки токена удаляю его из объекта юзера, перед ответом на клиент
+#     del user['refresh_token']
+#
+#     new_access_token = create_access_token(
+#         identity=current_user, expires_delta=datetime.timedelta(seconds=5))
+#     new_refresh_token = create_refresh_token(
+#         identity=current_user, expires_delta=datetime.timedelta(days=30))
+#     print('новые токены сгенерированы')
+#
+#     # обновляем токен в бд
+#     users_collection.update_one({'id': current_user}, {'$set': {'refresh_token': new_refresh_token}})
+#     # тут использую make_response т.к. set_cookie метод объекта response без него получаю ошибку 'dict' object has no
+#     # attribute 'set_cookie' в остальных ответах фласк сам преобразует в json
+#     response = make_response(
+#         {'user_obj': user, 'isAuth': True, 'access_token': new_access_token})
+#     response.set_cookie('token', new_refresh_token, httponly=True,
+#                         max_age=30 * 24 * 60 * 60, samesite='None', secure=True, path='/api')
+#     return response
 
 
 # обработка запроса на выход из системы
@@ -199,6 +200,8 @@ def logout():
     users_collection.update_one({'id': current_user}, {'$set': {'refresh_token': ''}})
     response = make_response({'message': 'User logged out successfully'})
     response.delete_cookie('token')
+    response.set_cookie('token', '', httponly=True,
+                        max_age=30 * 24 * 60 * 60, samesite='None', secure=True, path='/api')
     return response
 
 
@@ -234,6 +237,7 @@ def upd_user(user_id):
 
 @app.after_request
 def add_cors_headers(response):
+    # response.headers['Access-Control-Allow-Origin'] = 'http://194.87.236.158:3000/'
     response.headers['Access-Control-Allow-Origin'] = 'http://localhost:3000'
     response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'

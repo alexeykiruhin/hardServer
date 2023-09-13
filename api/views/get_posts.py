@@ -1,8 +1,8 @@
 # получение постов
+from mongo import posts_collection
 from flask import Blueprint, request
 api_get_posts = Blueprint('api_get_posts', __name__)
 # переменные из файла mongo.py
-from mongo import posts_collection
 
 
 @api_get_posts.route('/posts', methods=['GET', 'OPTIONS'])
@@ -10,7 +10,7 @@ def get_posts():
     page = int(request.args.get('page'))
     page_size = int(request.args.get('page_size'))
 
-# добавить поле дата создания и тогда по ней можно сортироваться
+    # добавить поле дата создания и тогда по ней можно сортироваться
 
     # операция агрегации
     pipeline = [
@@ -59,6 +59,7 @@ def get_posts():
             '$project': {
                 'id': 1,
                 'text': 1,
+                'subject': 1,
                 'rating': 1,
                 'author.username': 1,
                 'author.img': 1,
@@ -75,6 +76,7 @@ def get_posts():
     # print(posts_collection.find({}))
     count = posts_collection.count_documents({})
     posts = [post for post in result]
-    response = {'posts': posts, 'count': count}
+    # response = {'posts': posts, 'count': count}
     # response.set_cookie('test', 'test', samesite='None', secure=True)
-    return response
+    # return response
+    return posts
