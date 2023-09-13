@@ -1,4 +1,6 @@
 import datetime
+
+from bson import ObjectId
 from flask import Blueprint, make_response
 from flask_jwt_extended import get_jwt_identity, jwt_required, create_access_token, create_refresh_token
 from mongo import users_collection
@@ -18,12 +20,12 @@ def refresh():
     # print(f"cookie  -  {request.cookies.get('token')}")
 
     # получаем id юзера из токена
-    current_user = get_jwt_identity()
-    # print(user - {current_user}')
-
+    current_user = ObjectId(get_jwt_identity())
+    # print(f'user - {current_user}')
+    # decode_id = '{"$oid": "' + current_user + '"}'
     # получаем данные юзера
-    user = users_collection.find_one({'id': current_user}, {'_id': 0, 'password': 0, 'statusText': 0, 'rating': 0})
-    # print(user - {user["refresh_token"]}')
+    user = users_collection.find_one({'_id': current_user}, {'password': 0, 'statusText': 0, 'rating': 0})
+    # print(f'user - {user}')
 
     # !!!! из-за 2х
     # запросов подряд  к рефрешу токен не успевает обновится в куках и кука призодит со старым токеном а
@@ -34,15 +36,15 @@ def refresh():
 
     # после проверки токена удаляю его из объекта юзера, перед ответом на клиент
     del user['refresh_token']
-
+    user['_id'] = str(user['_id'])
     new_access_token = create_access_token(
-        identity=current_user, expires_delta=datetime.timedelta(seconds=5))
+        identity=user['_id'], expires_delta=datetime.timedelta(seconds=5))
     new_refresh_token = create_refresh_token(
-        identity=current_user, expires_delta=datetime.timedelta(days=30))
+        identity=user['_id'], expires_delta=datetime.timedelta(days=30))
     print('новые токены сгенерированы')
 
     # обновляем токен в бд
-    users_collection.update_one({'id': current_user}, {'$set': {'refresh_token': new_refresh_token}})
+    users_collection.update_one({'_id': current_user}, {'$set': {'refresh_token': new_refresh_token}})
     # тут использую make_response т.к. set_cookie метод объекта response без него получаю ошибку 'dict' object has no
 
     # attribute 'set_cookie' в остальных ответах фласк сам преобразует в json

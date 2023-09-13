@@ -1,9 +1,10 @@
 # получение постов
 from flask import Blueprint, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
+from mongo import users_collection
 api_subscribe = Blueprint('api_subscribe', __name__)
 # переменные из файла mongo.py
-from mongo import users_collection
+
 
 # принимаем айди юзера на кого нужно подписатьсяё
 @api_subscribe.route('/subscribe', methods=['PUT'])
