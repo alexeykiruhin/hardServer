@@ -139,16 +139,16 @@ def logout():
 
 
 # защита эндпоинта для авторизованных пользователей
-@app.route('/api/protected')
-@jwt_required()
-def protected():
-    user_id = get_jwt_identity()
-    user_obj = users_collection.find_one({'id': user_id}, {'_id': 0})
-    # кастылём удаляю пароль из ответа
-    del user_obj['password']
-    response = {'user_obj': user_obj, 'isAuth': True}
-    print('protected')
-    return response
+# @app.route('/api/protected')
+# @jwt_required()
+# def protected():
+#     user_id = get_jwt_identity()
+#     user_obj = users_collection.find_one({'id': user_id}, {'_id': 0})
+#     # кастылём удаляю пароль из ответа
+#     del user_obj['password']
+#     response = {'user_obj': user_obj, 'isAuth': True}
+#     print('protected')
+#     return response
 
 
 @app.route('/api/user/<int:user_id>', methods=['POST', 'OPTIONS'])  # исправить передачу айди юзера
