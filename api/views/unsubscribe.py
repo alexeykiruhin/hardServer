@@ -17,17 +17,24 @@ def unsubscribe():
     data = request.json
     # получаем айди юзера от которого отписываемся
     to_user_id = data['to_user_id']
+    subscribers = 0
 
     print(f'айди юзера - {current_user}')
     print(f'на кого подписан - {to_user_id}')
 
     try:
         users_collection.update_one({'_id': ObjectId(to_user_id)}, {"$pull": {"subscribers": ObjectId(current_user)}})
+        print('del')
+        # забираем новое количество подписчиков
+        # НЕ РАБОТАЕТ ка кбудто значение кэшируется
+        subscribers = len(users_collection.find_one({'_id': ObjectId(current_user)}, {'subscribers': 1}))
+
+        print(f'subscribe - {subscribers-1}')
     except:
         print('error')
 
     # вернуть юзеров на кого ты подписан
 
     # вернуть флаг что ты подписан на этого юзера
-    response = {'subs': False}
+    response = {'subs': False, 'subscribers': subscribers-1}  # Кастыль
     return response

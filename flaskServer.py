@@ -1,13 +1,8 @@
 import datetime
-import random
-
 from flask import Blueprint
 from flask import Flask, make_response, request
 from flask_cors import CORS, cross_origin
-from flask_jwt_extended import create_access_token, create_refresh_token, JWTManager, jwt_required, get_jwt_identity, \
-    verify_jwt_in_request
-from werkzeug.security import generate_password_hash, check_password_hash
-from api import api
+from flask_jwt_extended import create_access_token, create_refresh_token, JWTManager, jwt_required, get_jwt_identity
 from api.views.get_posts import api_get_posts
 from api.views.post_rating import api_post_rating
 from api.views.get_user import api_get_user
@@ -138,23 +133,10 @@ def logout():
     return response
 
 
-# защита эндпоинта для авторизованных пользователей
-# @app.route('/api/protected')
-# @jwt_required()
-# def protected():
-#     user_id = get_jwt_identity()
-#     user_obj = users_collection.find_one({'id': user_id}, {'_id': 0})
-#     # кастылём удаляю пароль из ответа
-#     del user_obj['password']
-#     response = {'user_obj': user_obj, 'isAuth': True}
-#     print('protected')
-#     return response
-
-
 @app.route('/api/user/<int:user_id>', methods=['POST', 'OPTIONS'])  # исправить передачу айди юзера
 @jwt_required()  # использование декоратора для проверки токена
 def upd_user(user_id):
-    # получаем данные из запроса
+    """Change Textststus"""
 
     # добавить проверку токена, если юзер вышел то нужно запретить отправку нового статуса
 

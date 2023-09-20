@@ -20,10 +20,12 @@ def get_user(user_id):  # сюда передается айди профиля 
     # print(f'user_id - {user_id}')
     user_info = users_collection.find_one(
         {'_id': ObjectId(user_id)}, {'password': 0})
+    print(f'est - {current_user_id}')
+    print(f'est - {user_info["subscribers"]}')
     # проверка подписан ли юзер на юзера на чью страницу зашел
-    is_bubscribed = True if current_user_id in user_info['subscribers'] else False
+    is_bubscribed = True if ObjectId(current_user_id) in user_info['subscribers'] else False
     # записываем в юзерс инфо значение о подписке
-    user_info['is_sub'] = is_bubscribed
+    user_info['isSubs'] = is_bubscribed
     # подсчитываем количество подписчиков
     user_info['subscribers'] = len(user_info['subscribers'])
     user_info['id'] = str(user_info['_id'])
