@@ -24,7 +24,7 @@ def refresh():
     # print(f'user - {current_user}')
     # decode_id = '{"$oid": "' + current_user + '"}'
     # получаем данные юзера
-    user = users_collection.find_one({'_id': current_user}, {'password': 0, 'statusText': 0, 'rating': 0})
+    user = users_collection.find_one({'_id': current_user}, {'password': 0})
     # print(f'user - {user}')
 
     # !!!! из-за 2х
@@ -36,7 +36,11 @@ def refresh():
 
     # после проверки токена удаляю его из объекта юзера, перед ответом на клиент
     del user['refresh_token']
+    # Objectid переводим в строку
+    user['subscribers'] = [str(u) for u in user['subscribers']]
     user['_id'] = str(user['_id'])
+    # записываем айди из монго дб в переменную id
+    user['id'] = user['_id']
     new_access_token = create_access_token(
         identity=user['_id'], expires_delta=datetime.timedelta(seconds=5))
     new_refresh_token = create_refresh_token(

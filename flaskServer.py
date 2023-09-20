@@ -25,6 +25,7 @@ from api.views.edit_comment import api_edit_comment
 from api.views.del_comment import api_del_сomment
 from api.views.get_users import api_get_users
 from api.views.search import api_search
+from api.views.registration import api_registration
 
 # переменные из файла mongo.py
 from mongo import users_collection, posts_collection
@@ -70,6 +71,8 @@ app.register_blueprint(api_get_users, url_prefix='/api')
 app.register_blueprint(api_search, url_prefix='/api')
 # рефреш
 app.register_blueprint(api_refresh, url_prefix='/api')
+# регистрация
+app.register_blueprint(api_registration, url_prefix='/api')
 
 # задаем секретный ключ для подписи токена
 app.config['JWT_SECRET_KEY'] = '23sa3501080X'
@@ -79,38 +82,6 @@ app.config['JWT_TOKEN_LOCATION'] = ['cookies', 'headers']
 app.config['JWT_REFRESH_COOKIE_NAME'] = 'token'
 
 jwt = JWTManager(app)  # инициализируем объект JWTManager
-
-
-# обработка запроса на регистрацию пользователя !не доделан хэш пароля
-@app.route('/api/register', methods=['POST'])
-def register():
-    # получаем данные из запроса
-    data = request.json
-
-    # проверяем, что такой пользователь не существует
-    user = users_collection.find_one(
-        {'username': data['username']}, {'_id': 0})
-    if user:
-        # существует
-        return {'error': 'User already exists'}
-    else:
-        # создаем нового пользователя
-        if data['username'] and data['password']:
-            #  проверяем что логин и пароль передали
-            print(users_collection.count_documents({}))
-            length_users = users_collection.count_documents({})
-            usr = {
-                "id": length_users + 1,
-                "username": data['username'],
-                "password": data['password'],  # сделать хеширование
-                "img": f"https://randomuser.me/api/portraits/men/{random.randint(1, 100)}.jpg",
-                "rating": 100,
-                "statusText": "newbie"
-            }
-            users_collection.insert_one(usr)
-            return {'isReg': True}
-        else:
-            return {'isReg': False}
 
 
 # обработка запроса на авторизацию пользователя
@@ -135,7 +106,11 @@ def login():
             '$set': {'refresh_token': refresh_token}})
         # после проверки пароля удаляю его из объекта юзера, перед ответом на клиент
         del user['password']
+        user['subscribers'] = [str(u) for u in user['subscribers']]
+        # Objectid переводим в строку
         user['_id'] = str(user['_id'])
+        # записываем айди из монго дб в переменную id
+        user['id'] = user['_id']
         # тут использую make_response т.к. set_cookie метод объекта response без него получаю ошибку 'dict' object has no attribute 'set_cookie'
         # в остальных ответах фласк сам преобразует в json
         response = make_response({'user_obj': user, 'isAuth': True,

@@ -47,7 +47,7 @@ def get_post_view(post_id):
                 # 'rating': 1,
                 'author.username': 1,
                 'author.img': 1,
-                'author.id': 1,
+                'author._id': 1,
                 '_id': 0,
                 'rating': {'result': 1},
                 'tags.tag_name': 1

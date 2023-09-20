@@ -1,7 +1,10 @@
 # получение постов
 from mongo import posts_collection
-from flask import Blueprint, request
+from flask import Blueprint, request, make_response
+
 api_get_posts = Blueprint('api_get_posts', __name__)
+
+
 # переменные из файла mongo.py
 
 
@@ -57,14 +60,13 @@ def get_posts():
         # исключение поля "_id" из документа автора
         {
             '$project': {
-                'id': 1,
                 'text': 1,
                 'subject': 1,
                 'rating': 1,
                 'author.username': 1,
                 'author.img': 1,
-                'author.id': 1,
-                '_id': 0,
+                'author._id': 1,
+                '_id': 1,
                 'rating': {'result': 1},
                 'tags.tag_name': 1
             }
@@ -76,6 +78,15 @@ def get_posts():
     # print(posts_collection.find({}))
     count = posts_collection.count_documents({})
     posts = [post for post in result]
+    for post in posts:
+        post['id'] = str(post['_id'])
+        del post['_id']
+    for post in posts:
+        # author, перобразование _id в строку
+        if 'author' in post:
+            post['author']['id'] = str(post['author']['_id'])
+            del post['author']['_id']
+    # posts['author._id'] = str(posts['author._id'])
     # response = {'posts': posts, 'count': count}
     # response.set_cookie('test', 'test', samesite='None', secure=True)
     # return response

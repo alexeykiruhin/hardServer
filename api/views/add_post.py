@@ -36,9 +36,7 @@ def add_post():
     print(out_tags)
 
     # создаем новый документ в коллекции posts
-    current_id = posts_collection.count_documents({}) + 1
     new_post = {
-        "id": current_id,
         "text": post_text,
         "rating": {
             "result": 0,
