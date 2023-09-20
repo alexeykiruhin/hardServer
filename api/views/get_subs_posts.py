@@ -1,5 +1,6 @@
 # получение постов
 import bson
+from bson import ObjectId
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from mongo import posts_collection
 from flask import Blueprint, request
@@ -40,7 +41,7 @@ def get_subs_posts():
         },
         {
             "$match": {
-                "author.subscribers": {"$in": [current_user]}
+                "author.subscribers": {"$in": [ObjectId(current_user)]}
             }
         },
         # объединение данных о посте и авторе
@@ -72,7 +73,7 @@ def get_subs_posts():
                 'author.subscribers': 1,
                 'author.username': 1,
                 'author.img': 1,
-                'author.id': 1,
+                'author._id': 1,
                 '_id': 0,
                 'rating': {'result': 1},
                 'tags.tag_name': 1
@@ -94,7 +95,7 @@ def get_subs_posts():
         },
         {
             "$match": {
-                "author_doc.subscribers": current_user
+                "author_doc.subscribers": ObjectId(current_user)
             }
         },
         {
@@ -106,8 +107,8 @@ def get_subs_posts():
     if len(decoded_doc) == 0:
         response = {'posts': [], 'count': 0}
     else:
+        print(f'decoded_doc - {decoded_doc}')
         decoded_doc = decoded_doc[0]
         decoded_doc = decoded_doc['total_posts']
-        print(f'decoded_doc - {decoded_doc}')
         response = {'posts': subs_posts, 'count': decoded_doc}
     return response
