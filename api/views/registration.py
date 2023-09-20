@@ -1,23 +1,24 @@
+import random
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
-from mongo import users_collection
-import random
+from mongo import users_collection  # переменные из файла mongo.py
 
 api_registration = Blueprint('api_registration', __name__)
-# переменные из файла mongo.py
-from bson import json_util
 
 
 @api_registration.route('/register', methods=['POST'])
-@jwt_required()
 def registration():
     """Registration blueprint"""
     # получаем данные из запроса
+    print(request.json)
     data = request.json
-
     # проверяем, что такой пользователь не существует
-    user = users_collection.find_one(
-        {'username': data['username']}, {'_id': 0})
+    user = users_collection.find_one({'email': data['email']}, {'_id': 0})
+    # try:
+    #     user = users_collection.find_one({'email': data['email']}, {'_id': 0})
+    # finally:
+    #     # не существует
+    #     user = False
     if user:
         # существует
         return {'error': 'User already exists'}
@@ -25,15 +26,17 @@ def registration():
         # создаем нового пользователя
         if data['username'] and data['password']:
             #  проверяем что логин и пароль передали
-            print(users_collection.count_documents({}))
-            length_users = users_collection.count_documents({})
             usr = {
-                "id": length_users + 1,
+                "email": data['email'],
                 "username": data['username'],
                 "password": data['password'],  # сделать хеширование
-                "img": f"https://randomuser.me/api/portraits/men/{random.randint(1, 100)}.jpg",
-                "rating": 100,
-                "statusText": "newbie"
+                "img": f"https://randomuser.me/api/portraits/men/{random.randint(1, 100)}.jpg",  # временная ава
+                "rating": 0,
+                "statusText": "newbie",
+                "refresh_token": "",
+                "plus": 0,
+                "minus": 0,
+                "subscribers": []
             }
             users_collection.insert_one(usr)
             return {'isReg': True}
