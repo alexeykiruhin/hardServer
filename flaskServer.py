@@ -1,4 +1,6 @@
 import datetime
+
+from bson import ObjectId
 from flask import Blueprint
 from flask import Flask, make_response, request
 from flask_cors import CORS, cross_origin
@@ -133,7 +135,7 @@ def logout():
     return response
 
 
-@app.route('/api/user/<int:user_id>', methods=['POST', 'OPTIONS'])  # исправить передачу айди юзера
+@app.route('/api/user/<string:user_id>', methods=['POST', 'OPTIONS'])  # исправить передачу айди юзера
 @jwt_required()  # использование декоратора для проверки токена
 def upd_user(user_id):
     """Change Textststus"""
@@ -145,7 +147,7 @@ def upd_user(user_id):
     print(f'status_text - {status_text}')
     print(f'userId - {user_id}')
     users_collection.update_one(
-        {'id': user_id}, {'$set': {'statusText': status_text}})
+        {'_id': ObjectId(user_id)}, {'$set': {'statusText': status_text}})
     response = {'statusText': status_text}
     return response
 
