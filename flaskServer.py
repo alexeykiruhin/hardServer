@@ -23,6 +23,7 @@ from api.views.del_comment import api_del_сomment
 from api.views.get_users import api_get_users
 from api.views.search import api_search
 from api.views.registration import api_registration
+from api.views.upload import file_upload_bp
 
 # переменные из файла mongo.py
 from mongo import users_collection, posts_collection
@@ -70,6 +71,8 @@ app.register_blueprint(api_search, url_prefix='/api')
 app.register_blueprint(api_refresh, url_prefix='/api')
 # регистрация
 app.register_blueprint(api_registration, url_prefix='/api')
+# загрузка файлов
+app.register_blueprint(file_upload_bp, url_prefix="/api")
 
 # задаем секретный ключ для подписи токена
 app.config['JWT_SECRET_KEY'] = '23sa3501080X'
@@ -157,7 +160,7 @@ def add_cors_headers(response):
     # response.headers['Access-Control-Allow-Origin'] = 'http://194.87.236.158:3000/'
     response.headers['Access-Control-Allow-Origin'] = 'http://localhost:3000'
     response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, x-requested-with'
     response.headers['Access-Control-Allow-Credentials'] = 'true'
     return response
 

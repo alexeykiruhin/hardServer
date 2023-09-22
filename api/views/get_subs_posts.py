@@ -84,6 +84,17 @@ def get_subs_posts():
     # выполнение операции агрегации
     result = posts_collection.aggregate(pipeline)
     subs_posts = [post for post in result]
+    for post in subs_posts:
+        # author, перобразование _id в строку
+        if 'author' in post:
+            post['author']['id'] = str(post['author']['_id'])
+            del post['author']['_id']
+    for post in subs_posts:
+        # author, перобразование _id в строку
+        if 'author' in post:
+            post['author']['subscribers'] = [str(p) for p in post['author']['subscribers']]
+            print(f'subscribers - {post["author"]["subscribers"]}')
+    print(f'subs_posts - {subs_posts[0]}')
     count = posts_collection.aggregate([
         {
             "$lookup": {
@@ -107,8 +118,8 @@ def get_subs_posts():
     if len(decoded_doc) == 0:
         response = {'posts': [], 'count': 0}
     else:
-        print(f'decoded_doc - {decoded_doc}')
         decoded_doc = decoded_doc[0]
         decoded_doc = decoded_doc['total_posts']
         response = {'posts': subs_posts, 'count': decoded_doc}
+        print(f'response - {response}')
     return response
