@@ -70,6 +70,7 @@ def get_subs_posts():
                 'id': 1,
                 'text': 1,
                 'rating': 1,
+                'img': 1,
                 'author.subscribers': 1,
                 'author.username': 1,
                 'author.img': 1,

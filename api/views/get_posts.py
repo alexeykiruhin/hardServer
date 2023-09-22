@@ -63,6 +63,7 @@ def get_posts():
                 'text': 1,
                 'subject': 1,
                 'rating': 1,
+                'img': 1,
                 'author.username': 1,
                 'author.img': 1,
                 'author._id': 1,

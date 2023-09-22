@@ -73,11 +73,12 @@ def get_user(user_id):  # сюда передается айди профиля 
                 'author.username': 1,
                 'author.img': 1,
                 'author._id': 1,
+                'img': 1,
                 'tags.tag_name': 1
             }
         }
     ])
-    # создаём список из объекта бд
+    # создаём список из объекта бдc
     user_posts = list(user_posts)
     for user_post in user_posts:
         user_post['id'] = str(user_post['_id'])

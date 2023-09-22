@@ -1,3 +1,6 @@
+import datetime
+import re
+
 from bson import ObjectId
 from flask import Blueprint, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
@@ -16,7 +19,20 @@ def add_post():
 
     post_data = request.json  # данные из запроса
 
-    dtags = post_data["post_data"]["tags"].split(', ')  # список тегов
+    # Разделители, которые вы хотите использовать
+    delimiters = [',', ' ', ';', '-', '#', ', ', ' ',]
+
+    # Разделите строку на массив, используя разные разделители
+    # dtags = re.split('|'.join(map(re.escape, delimiters)), post_data["post_data"]["tags"])  # список тегов
+
+    # Разбиваем строку и удаляем пустые строки
+    dtags = list(filter(None, re.split('|'.join(map(re.escape, delimiters)), post_data["post_data"]["tags"])))
+
+    # dtags = post_data["post_data"]["tags"].split(', ')  # список тегов старая версия
+
+    date = datetime.datetime.now()# дата для добавление в информацию о посте
+
+    print(f'date - {date}')
 
     # post_text = post_data['text']
     # post_tags = post_data['tags']
@@ -52,7 +68,8 @@ def add_post():
         },
         "author": ObjectId(author_id),
         "tags": out_tags,
-        "img": post_data["post_data"]["file"]
+        "img": post_data["post_data"]["file"],
+        "date": date
     }
     # # добавляем пост в бд
     # posts_collection.insert_one(new_post)
