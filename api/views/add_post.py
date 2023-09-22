@@ -19,14 +19,17 @@ def add_post():
 
     post_data = request.json  # данные из запроса
 
+    dtags = post_data["post_data"]["tags"]
+    print(f'tags - {post_data["post_data"]["tags"]}')
+
     # Разделители, которые вы хотите использовать
-    delimiters = [',', ' ', ';', '-', '#', ', ', ' ',]
+    # delimiters = [',', ' ', ';', '-', '#', ', ', ' ',]
 
     # Разделите строку на массив, используя разные разделители
     # dtags = re.split('|'.join(map(re.escape, delimiters)), post_data["post_data"]["tags"])  # список тегов
 
     # Разбиваем строку и удаляем пустые строки
-    dtags = list(filter(None, re.split('|'.join(map(re.escape, delimiters)), post_data["post_data"]["tags"])))
+    # dtags = list(filter(None, re.split('|'.join(map(re.escape, delimiters)), post_data["post_data"]["tags"])))
 
     # dtags = post_data["post_data"]["tags"].split(', ')  # список тегов старая версия
 
@@ -36,7 +39,7 @@ def add_post():
 
     # post_text = post_data['text']
     # post_tags = post_data['tags']
-    print(f'tags - {dtags}')
+    # print(f'tags - {dtags}')
     # получаем автора поста из коллекции users
     # author = users_collection.find_one({'_id': ObjectId(author_id)}, {'_id': 1})
     print(f'author - {ObjectId(author_id)}')

@@ -7,7 +7,6 @@ api_search = Blueprint('api_search', __name__)
 # переменные из файла mongo.py
 
 
-
 @api_search.route('/search', methods=['POST'])
 @jwt_required()
 def search():

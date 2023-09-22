@@ -95,7 +95,7 @@ def get_subs_posts():
         if 'author' in post:
             post['author']['subscribers'] = [str(p) for p in post['author']['subscribers']]
             print(f'subscribers - {post["author"]["subscribers"]}')
-    print(f'subs_posts - {subs_posts[0]}')
+    # print(f'subs_posts - {subs_posts[0]}')
     count = posts_collection.aggregate([
         {
             "$lookup": {
