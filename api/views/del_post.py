@@ -1,4 +1,5 @@
 # получение постов
+from bson import ObjectId
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 api_del_post = Blueprint('api_del_post', __name__)
@@ -17,8 +18,8 @@ def del_post():
     post_id = data['post_id']
     print(f'post_id - {post_id}')
     try:
-        posts_collection.delete_one({'id': post_id})
-        response = {'statusDeletePost': True}
+        posts_collection.delete_one({'_id': ObjectId(post_id)})
+        response = post_id
     except:
-        response = {'statusDeletePost': False}
+        response = False
     return response

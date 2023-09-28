@@ -63,8 +63,5 @@ def get_post_view(post_id):
     post[0]['author']['id'] = str(post[0]['author']['_id'])
     del post[0]['author']['_id']
 
-    response = {
-        'post_info': post[0]
-    }
     print(post[0])
-    return response
+    return post[0]
