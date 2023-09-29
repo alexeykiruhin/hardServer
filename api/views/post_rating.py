@@ -113,9 +113,9 @@ def post_rating():
                 # так же удаляем эту оценку из документа юзерс (из счётчика оценок юзера)
 
                 if score > 0:
-                    users_collection.update_one({'_id': user_id}, {'$set': {'minus': minus - 1}})
+                    users_collection.update_one({'_id': ObjectId(user_id)}, {'$set': {'minus': minus - 1}})
                 else:
-                    users_collection.update_one({'_id': user_id}, {'$set': {'plus': plus - 1}})
+                    users_collection.update_one({'_id': ObjectId(user_id)}, {'$set': {'plus': plus - 1}})
 
 
                 # новое значение рейтинга зависит от оценки поставленной юзером
@@ -137,9 +137,9 @@ def post_rating():
             
             # добавляем эту оценку в счётчик оценок у юзера
             if score > 0:
-                users_collection.update_one({'_id': user_id}, {'$set': {'plus': plus + 1}})
+                users_collection.update_one({'_id': ObjectId(user_id)}, {'$set': {'plus': plus + 1}})
             else:
-                users_collection.update_one({'_id': user_id}, {'$set': {'minus': minus + 1}})
+                users_collection.update_one({'_id': ObjectId(user_id)}, {'$set': {'minus': minus + 1}})
 
             response = {"new_rating": {"result": {"result": new_rating}, 'post_id': post_id}}
             return response

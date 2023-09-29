@@ -34,7 +34,7 @@ def get_users():
             },
             {
                 "$match": {
-                    "author.id": user['_id']
+                    "author._id": user['_id']
                 }
             },
             # исключение поля "_id" из документа автора
@@ -48,17 +48,22 @@ def get_users():
         result = posts_collection.aggregate(pipeline)
         total_rating = 0
         for doc in result:
-            # print(doc)
+            # print("doc", doc['rating']['result'])
             total_rating = total_rating + doc['rating']['result']
 
-        print('_id', user['_id'])
-        user['_id'] = str(user['_id'])
+        # print('total_rating', total_rating)
+        # print('_id', user['_id'])
+        user['id'] = str(user['_id'])
+        del user['refresh_token']
+        del user['_id']
         # user['_id'] = user['_id'][10: -2]
         user['rating'] = total_rating
+        user['subscribers'] = len(user['subscribers'])
+        print('user', user)
         users_list.append(user)
     count = users_collection.count_documents({})
     # sorted(users_list, key=attrgetter('rating'), reverse=False)
     users_list = sorted(users_list, key=lambda x: x['rating'], reverse=True)
-    print(users_list)
+    # print(users_list)
     response = {'users': users_list, 'count': count}
     return response
