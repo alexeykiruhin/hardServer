@@ -1,7 +1,7 @@
 import random
 from flask import Blueprint, request
-from flask_jwt_extended import jwt_required
 from mongo import users_collection  # переменные из файла mongo.py
+import bcrypt
 
 api_registration = Blueprint('api_registration', __name__)
 
@@ -25,11 +25,19 @@ def registration():
     else:
         # создаем нового пользователя
         if data['username'] and data['password']:
+            # Хершируем пароль
+
+            # Генерируем соль
+            salt = bcrypt.gensalt()
+
+            # Хешируйте пароль с использованием соли
+            hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), salt)
+
             #  проверяем что логин и пароль передали
             usr = {
                 "email": data['email'],
                 "username": data['username'],
-                "password": data['password'],  # сделать хеширование
+                "password": hashed_password,
                 "img": f"https://randomuser.me/api/portraits/men/{random.randint(1, 100)}.jpg",  # временная ава
                 "rating": 0,
                 "statusText": "newbie",

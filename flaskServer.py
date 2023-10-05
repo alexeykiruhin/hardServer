@@ -8,6 +8,7 @@ from flask_jwt_extended import create_access_token, create_refresh_token, JWTMan
 from api.views.get_posts import api_get_posts
 from api.views.get_tags import api_get_tags
 from api.views.image import image_blueprint
+from api.views.login import api_login
 from api.views.post_rating import api_post_rating
 from api.views.get_user import api_get_user
 from api.views.refresh import api_refresh
@@ -73,6 +74,8 @@ app.register_blueprint(api_search, url_prefix='/api')
 app.register_blueprint(api_refresh, url_prefix='/api')
 # регистрация
 app.register_blueprint(api_registration, url_prefix='/api')
+# логин
+app.register_blueprint(api_login, url_prefix='/api')
 # загрузка файлов
 app.register_blueprint(file_upload_bp, url_prefix="/api")
 # отдать файл
@@ -91,43 +94,43 @@ jwt = JWTManager(app)  # инициализируем объект JWTManager
 
 
 # обработка запроса на авторизацию пользователя
-@app.route('/api/login', methods=['POST'])
-def login():
-    # получаем данные из запроса
-    data = request.json
-    # ищем пользователя в базе данных
-    user = users_collection.find_one({'username': data['username']}, {'statusText': 0, 'rating': 0, 'refresh_token': 0})
-    if user is None:
-        print(f'Пользователя с логином {data["username"]} не существует')
-        return {'messageError': f'Пользователя с логином {data["username"]} не существует'}, 401
-    # проверяем пароль
-    if user['password'] == data['password']:
-        # создаем токен, вынести в отдельную функцию
-        access_token = create_access_token(
-            identity=str(user['_id']), expires_delta=datetime.timedelta(seconds=5))
-        refresh_token = create_refresh_token(
-            identity=str(user['_id']), expires_delta=datetime.timedelta(days=30))
-        # добавляем токен в бд
-        users_collection.update_one({'username': data['username']}, {
-            '$set': {'refresh_token': refresh_token}})
-        # после проверки пароля удаляю его из объекта юзера, перед ответом на клиент
-        del user['password']
-        user['subscribers'] = [str(u) for u in user['subscribers']]
-        # Objectid переводим в строку
-        user['_id'] = str(user['_id'])
-        # записываем айди из монго дб в переменную id
-        user['id'] = user['_id']
-        # тут использую make_response т.к. set_cookie метод объекта response без него получаю ошибку 'dict' object has no attribute 'set_cookie'
-        # в остальных ответах фласк сам преобразует в json
-        response = make_response({'user_obj': user, 'isAuth': True,
-                                  'access_token': access_token, 'refresh_token': refresh_token})
-        # response.set_cookie('refresh_token', refresh_token, httponly=True, max_age=30*24*60*60, samesite='None', secure=True, path='/api')
-        response.set_cookie('token', refresh_token, httponly=True, max_age=30 * 24 * 60 * 60,
-                            samesite='None', secure=True, path='/api')  # попробовать секьюр флаг поменять
-        return response
-    # возвращаем ошибку
-    print('Неверный пароль')
-    return {'messageError': 'Неверный пароль'}, 401
+# @app.route('/api/login', methods=['POST'])
+# def login():
+#     # получаем данные из запроса
+#     data = request.json
+#     # ищем пользователя в базе данных
+#     user = users_collection.find_one({'username': data['username']}, {'statusText': 0, 'rating': 0, 'refresh_token': 0})
+#     if user is None:
+#         print(f'Пользователя с логином {data["username"]} не существует')
+#         return {'messageError': f'Пользователя с логином {data["username"]} не существует'}, 401
+#     # проверяем пароль
+#     if user['password'] == data['password']:
+#         # создаем токен, вынести в отдельную функцию
+#         access_token = create_access_token(
+#             identity=str(user['_id']), expires_delta=datetime.timedelta(seconds=5))
+#         refresh_token = create_refresh_token(
+#             identity=str(user['_id']), expires_delta=datetime.timedelta(days=30))
+#         # добавляем токен в бд
+#         users_collection.update_one({'username': data['username']}, {
+#             '$set': {'refresh_token': refresh_token}})
+#         # после проверки пароля удаляю его из объекта юзера, перед ответом на клиент
+#         del user['password']
+#         user['subscribers'] = [str(u) for u in user['subscribers']]
+#         # Objectid переводим в строку
+#         user['_id'] = str(user['_id'])
+#         # записываем айди из монго дб в переменную id
+#         user['id'] = user['_id']
+#         # тут использую make_response т.к. set_cookie метод объекта response без него получаю ошибку 'dict' object has no attribute 'set_cookie'
+#         # в остальных ответах фласк сам преобразует в json
+#         response = make_response({'user_obj': user, 'isAuth': True,
+#                                   'access_token': access_token, 'refresh_token': refresh_token})
+#         # response.set_cookie('refresh_token', refresh_token, httponly=True, max_age=30*24*60*60, samesite='None', secure=True, path='/api')
+#         response.set_cookie('token', refresh_token, httponly=True, max_age=30 * 24 * 60 * 60,
+#                             samesite='None', secure=True, path='/api')  # попробовать секьюр флаг поменять
+#         return response
+#     # возвращаем ошибку
+#     print('Неверный пароль')
+#     return {'messageError': 'Неверный пароль'}, 401
 
 
 @app.route('/api/logout', methods=['GET'])
