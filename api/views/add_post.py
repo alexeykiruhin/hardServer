@@ -4,6 +4,8 @@ import re
 from bson import ObjectId
 from flask import Blueprint, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
+from transliterate import translit
+
 from mongo import posts_collection, users_collection, tags_collection  # переменные из файла mongo.py
 
 api_add_post = Blueprint('api_add_post', __name__)
@@ -60,6 +62,10 @@ def add_post():
             print("Обновленный документ:", find_tag["_id"])
 
     print(out_tags)
+    # Транслитерация текста
+    transliterate_file_name = translit(post_data["post_data"]["file"], 'ru', reversed=True)
+
+    print('translit', transliterate_file_name)
 
     # создаем новый документ в коллекции posts
     new_post = {
@@ -71,7 +77,7 @@ def add_post():
         },
         "author": ObjectId(author_id),
         "tags": out_tags,
-        "img": post_data["post_data"]["file"],
+        "img": transliterate_file_name,
         "date": date
     }
     # # добавляем пост в бд
