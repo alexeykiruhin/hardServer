@@ -33,13 +33,22 @@ def edit_post():
             out_tags.append(tag_id)
             print("Обновленный документ:", find_tag["_id"])
 
-    print(out_tags)
-
-    print(f'post - {post}')
     try:
-        posts_collection.update_one({'_id': ObjectId(post["id"])}, {
+        result = posts_collection.update_one({'_id': ObjectId(post["id"])}, {
             '$set': {'text': post["text"], 'subject': post["title"], 'tags': out_tags, 'img': post["file"]}})
-        response = post
+        print('result', result.modified_count)
+        if result.modified_count == 1:
+            print('HAHA')
+            response = posts_collection.find_one({'_id': ObjectId(post["id"])})
+            response['id'] = post["id"]
+            del response['_id']
+            response['author']['id'] = str(response['author']['_id'])
+            del response['author']['_id']
+            print('response', response)
+        else:
+            print(1)
+            response = {'editPost': False}
     except:
+        print(2)
         response = {'editPost': False}
     return response

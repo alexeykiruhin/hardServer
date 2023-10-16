@@ -1,15 +1,13 @@
-# получение юзера
 from bson import ObjectId
-from flask import Blueprint, request
-from flask_jwt_extended import get_jwt_identity, jwt_required
-from mongo import posts_collection, users_collection  # переменные из файла mongo.py
+from flask import Blueprint
+from mongo import posts_collection  # переменные из файла mongo.py
 
 api_get_post_view = Blueprint('api_get_post_view', __name__)
 
 
 @api_get_post_view.route('/post/<string:post_id>', methods=['GET'])
-# @jwt_required()  # использование декоратора для проверки токена
 def get_post_view(post_id):
+    """Получение поста (просмотр поста)"""
     # сюда передается айди поста который мы просматриваем
     post_id = ObjectId(post_id)
     post_info = posts_collection.aggregate([
@@ -63,5 +61,5 @@ def get_post_view(post_id):
     post[0]['author']['id'] = str(post[0]['author']['_id'])
     del post[0]['author']['_id']
 
-    print(post[0])
+    print('post[0]', post[0])
     return post[0]
