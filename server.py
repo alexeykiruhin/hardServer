@@ -93,6 +93,12 @@ app.config['JWT_REFRESH_COOKIE_NAME'] = 'token'
 jwt = JWTManager(app)  # инициализируем объект JWTManager
 
 
+@app.route('/api/time', methods=['GET'])
+def time():
+    print('time')
+    return 'TIME'
+
+
 @app.route('/api/logout', methods=['GET'])
 @jwt_required(refresh=True)
 def logout():
