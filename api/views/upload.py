@@ -38,6 +38,6 @@ def upload_file():
             transliterate_file_name = translit(file.filename, 'ru', reversed=True)
             filename = secure_filename(transliterate_file_name)
             print(f'filename - {filename}')
-            file.save(os.path.join(UPLOAD_FOLDER, filename))
+            file.save(os.path.join(UPLOAD_FOLDER, filename))  # добавить проверку на существование директории
             print('OK')
         return 'OK'

@@ -133,8 +133,8 @@ def upd_user(user_id):
 @app.after_request
 def add_cors_headers(response):
     # response.headers['Access-Control-Allow-Origin'] = 'http://194.87.236.158:3000/'
-    # response.headers['Access-Control-Allow-Origin'] = 'http://localhost:3000'
-    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:3000'
+    # response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, x-requested-with'
     response.headers['Access-Control-Allow-Credentials'] = 'true'
