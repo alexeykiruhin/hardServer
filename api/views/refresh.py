@@ -42,7 +42,8 @@ def refresh():
     # записываем айди из монго дб в переменную id
     user['id'] = user['_id']
     new_access_token = create_access_token(
-        identity=user['_id'], expires_delta=datetime.timedelta(seconds=5))
+        identity=user['_id'], expires_delta=datetime.timedelta(minutes=60))
+    # identity=user['_id'], expires_delta=datetime.timedelta(seconds=5))
     new_refresh_token = create_refresh_token(
         identity=user['_id'], expires_delta=datetime.timedelta(days=30))
     print('новые токены сгенерированы')
