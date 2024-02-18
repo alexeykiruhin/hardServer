@@ -55,7 +55,7 @@ def get_post_view(post_id):
     ])
 
     post = [p for p in post_info]
-
+    # прохожу по документу и заменяю _id на id
     post[0]['id'] = str(post[0]['_id'])
     del post[0]['_id']
     post[0]['author']['id'] = str(post[0]['author']['_id'])

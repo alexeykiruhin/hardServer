@@ -4,17 +4,15 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 api_get_post_comments = Blueprint('api_get_post_comments', __name__)
 # переменные из файла mongo.py
 from mongo import posts_collection, users_collection, comments_collection
-from bson import json_util
+from bson import json_util, ObjectId
 
 
-
-
-@api_get_post_comments.route('/comments/<int:post_id>', methods=['GET'])
+@api_get_post_comments.route('/comments/<string:post_id>', methods=['GET'])
 # @jwt_required()  # использование декоратора для проверки токена
 def get_post_comments(post_id):  # сюда передается айди поста который мы просматриваем
     # находим настоящий айди поста
-    realId = posts_collection.find_one({'id': post_id}, {'_id': 1})
-    realId = realId['_id']
+    # print('post_id', post_id)
+    post_id = ObjectId(post_id)
     comments = comments_collection.aggregate([
         {
             '$lookup':
@@ -30,17 +28,17 @@ def get_post_comments(post_id):  # сюда передается айди пос
         },
         {
             '$match': {
-                "post_id": realId
+                "post_id": post_id
             }
         },
         # исключение полей
         {
             '$project': {
-                'comment_text': 1,
+                'text': 1,
                 'created_at': 1,
                 'author.username': 1,
                 'author.img': 1,
-                'author.id': 1,
+                'author._id': 1,
                 '_id': 1,
             }
         }
@@ -49,11 +47,14 @@ def get_post_comments(post_id):  # сюда передается айди пос
     out = [c for c in comments]
     # Проходим по каждому документу и сериализуем ObjectId
     for o in out:
-        o['_id'] = json_util.dumps(o['_id'])
-        o['_id'] = o['_id'][10: -2]
-        print(o['_id'][10: -2])
-    print(out)
-    response = {    
-            'comments': out
-        }
+        # print(o)
+        o['id'] = str(o['_id'])
+        del o['_id']
+        o['author']['id'] = str(o['author']['_id'])
+        del o['author']['_id']
+        # o['_id'] = json_util.dumps(o['_id'])
+        # o['_id'] = o['_id'][10: -2]
+        # print('o', o['_id'])
+    print('out', out)
+    response = out
     return response
