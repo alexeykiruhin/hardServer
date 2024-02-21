@@ -1,5 +1,7 @@
 from bson import ObjectId
 from flask import Blueprint
+
+from api.functions.change_id import change_id
 from mongo import posts_collection  # переменные из файла mongo.py
 
 api_get_post_view = Blueprint('api_get_post_view', __name__)
@@ -54,12 +56,5 @@ def get_post_view(post_id):
         }
     ])
 
-    post = [p for p in post_info]
-    # прохожу по документу и заменяю _id на id
-    post[0]['id'] = str(post[0]['_id'])
-    del post[0]['_id']
-    post[0]['author']['id'] = str(post[0]['author']['_id'])
-    del post[0]['author']['_id']
-
-    print('post[0]', post[0])
-    return post[0]
+    post = change_id(post_info)
+    return post
