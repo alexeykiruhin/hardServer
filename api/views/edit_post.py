@@ -17,33 +17,45 @@ def edit_post():
 
     data = request.json
     post = data['post_data']
+    print('edit_post', post)
     # new_post_text = data['text']
     # добавляем теги в бд
     out_tags = []
+    rec_tags = []
     for tag in post["tags"]:
         # проверяем есть ли такой тег
-        find_tag = tags_collection.find_one({"tag_name": tag}, {"_id": 1})
+        find_tag = tags_collection.find_one({"tag_name": tag}, {"tag_name": 1, '_id': 1})
 
         if find_tag is None:
             new_tag = tags_collection.insert_one({"tag_name": tag})
-            out_tags.append(new_tag.inserted_id)
+            rec_tags.append(new_tag.inserted_id)
+            out_tags.append({"tag_name": tag})
             print("Документ не найден.")
         else:
-            tag_id = find_tag["_id"]
-            out_tags.append(tag_id)
+            rec_tags.append(find_tag["_id"])
+            out_tags.append({"tag_name": find_tag['tag_name']})
             print("Обновленный документ:", find_tag["_id"])
+    print('tegi ', out_tags)
 
-    try:
+    try:  # не находит
+        print('id - ', post['id'])
+        print('post["text"]', post["text"])
+        print('post["subject"]', post["subject"])
+        print('post["file"]', post["img"])
+
+        print(posts_collection.find_one({'_id': ObjectId(post["id"])}))
         result = posts_collection.update_one({'_id': ObjectId(post["id"])}, {
-            '$set': {'text': post["text"], 'subject': post["title"], 'tags': out_tags, 'img': post["file"]}})
+            '$set': {'text': post["text"], 'subject': post["subject"], 'tags': rec_tags, 'img': post["img"]}})
         print('result', result.modified_count)
         if result.modified_count == 1:
             print('HAHA')
-            response = posts_collection.find_one({'_id': ObjectId(post["id"])})
-            response['id'] = post["id"]
-            del response['_id']
-            response['author']['id'] = str(response['author']['_id'])
-            del response['author']['_id']
+            # response = posts_collection.find_one({'_id': ObjectId(post["id"])})
+            # response['id'] = post["id"]
+            # del response['_id']
+            # response['author']['id'] = str(response['author']['_id'])
+            # del response['author']['_id']
+            post['tags'] = out_tags
+            response = post
             print('response', response)
         else:
             print(1)

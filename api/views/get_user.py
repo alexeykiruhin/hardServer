@@ -20,8 +20,8 @@ def get_user(user_id):  # сюда передается айди профиля 
     # print(f'user_id - {user_id}')
     user_info = users_collection.find_one(
         {'_id': ObjectId(user_id)}, {'password': 0})
-    print(f'est - {current_user_id}')
-    print(f'est - {user_info["subscribers"]}')
+    # print(f'est - {current_user_id}')
+    # print(f'est - {user_info["subscribers"]}')
     # проверка подписан ли юзер на юзера на чью страницу зашел
     is_bubscribed = True if ObjectId(current_user_id) in user_info['subscribers'] else False
     # записываем в юзерс инфо значение о подписке
@@ -31,7 +31,7 @@ def get_user(user_id):  # сюда передается айди профиля 
     user_info['id'] = str(user_info['_id'])
     del user_info['_id']
 
-    print(user_id)
+    # print(user_id)
     user_posts = posts_collection.aggregate([
         {
             '$lookup':
@@ -89,19 +89,19 @@ def get_user(user_id):  # сюда передается айди профиля 
         if 'author' in post:
             post['author']['id'] = str(post['author']['_id'])
             del post['author']['_id']
-    print(f'user_posts_first - {user_posts}')
+    # print(f'user_posts_first - {user_posts}')
     all_rating = sum([r['rating']['result'] for r in user_posts])
     # print(f'rating post - {all_rating}')
     # вычисляем и записываем количество постов в информацию о юзере
     user_info['posts_count'] = len(user_posts)
     # преобразовываем объект бд в список постов
     # user_posts = [[txt['text'], str(txt['_id'])] for txt in user_posts]
-    print(user_posts)
+    # print(user_posts)
     #  айди в урле сравниваем с айди из куки, если они одинаковые то передавать
     #  флаг это я и тогда профиль будет иметь возможность редактирования
     is_me = True if user_id == current_user_id else False
 
-    print(f'info - {user_info}')
+    # print(f'info - {user_info}')
 
     response = make_response({
         'user_info': user_info,

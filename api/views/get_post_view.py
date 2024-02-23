@@ -49,6 +49,7 @@ def get_post_view(post_id):
                 'author.username': 1,
                 'author.img': 1,
                 'author._id': 1,
+                'author.statusText': 1,
                 '_id': 1,
                 'rating': {'result': 1},
                 'tags.tag_name': 1
