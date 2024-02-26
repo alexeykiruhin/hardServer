@@ -1,28 +1,30 @@
-# получение постов
+# редактирование комментария
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
-api_edit_comment = Blueprint('api_edit_comment', __name__)
 # переменные из файла mongo.py
 from mongo import comments_collection
-from bson import json_util
+from bson import ObjectId
+
+api_edit_comment = Blueprint('api_edit_comment', __name__)
+
 
 @api_edit_comment.route('/edit_comment', methods=['POST'])
 @jwt_required()
-def del_post():
+def edit_comment():
     # получаем данные из запроса
 
     # добавить проверку токена, если юзер вышел то нужно запретить отправку нового статуса
 
     data = request.json
-    comment_id = data['comment_id']
-    decode_id = '{"$oid": "' + comment_id + '"}'
-    decode_id = json_util.loads(decode_id)
-    new_comment_text = data['new_comment_text']
-    print(f'comment_id - {comment_id}')
-    print(f'new_comment_text - {new_comment_text}')
+    print('EDIT - ', data)
+    comment_data = data['comment_data']
     try:
-        comments_collection.update_one({'_id': decode_id}, {'$set': {'comment_text': new_comment_text}})
-        response = {'comment_id': comment_id, 'new_comment_text': new_comment_text}
+        out = comments_collection.update_one(
+            {'_id': ObjectId(comment_data['comment_id'])},
+            {'$set': {'text': comment_data['text']}}
+        )
+        print('OUT', out)
+        response = {'id': comment_data["comment_id"], 'text': comment_data['text']}
     except:
         response = {'editComment': False}
     return response
