@@ -5,6 +5,8 @@ from flask import Blueprint
 from flask import Flask, make_response, request
 from flask_cors import CORS, cross_origin
 from flask_jwt_extended import create_access_token, create_refresh_token, JWTManager, jwt_required, get_jwt_identity
+
+from api.views.cp.cp import api_cp
 from api.views.get_posts import api_get_posts
 from api.views.get_tags import api_get_tags
 from api.views.image import image_blueprint
@@ -82,6 +84,9 @@ app.register_blueprint(file_upload_bp, url_prefix="/api")
 app.register_blueprint(image_blueprint, url_prefix="/api")
 # отдать теги
 app.register_blueprint(api_get_tags, url_prefix="/api")
+#
+# CP
+app.register_blueprint(api_cp, url_prefix="/api")
 
 # задаем секретный ключ для подписи токена
 app.config['JWT_SECRET_KEY'] = '23sa3501080X'
