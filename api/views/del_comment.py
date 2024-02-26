@@ -1,10 +1,11 @@
 # удаление комментария
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
+
 api_del_сomment = Blueprint('api_del_сomment', __name__)
 # переменные из файла mongo.py
 from mongo import comments_collection
-from bson import json_util
+from bson import json_util, ObjectId
 
 
 @api_del_сomment.route('/del_comment', methods=['POST'])
@@ -15,12 +16,11 @@ def del_post():
     # добавить проверку токена, если юзер вышел то нужно запретить отправку нового статуса
 
     data = request.json
-    comment_id = data['comment_id']
-    decode_id = '{"$oid": "' + comment_id + '"}'
-    decode_id = json_util.loads(decode_id)
+    print('del', data)
+    comment_id = data['id']
     try:
-        comments_collection.delete_one({'_id': decode_id})
-        response = {'statusDeletePost': True}
+        comments_collection.delete_one({'_id': ObjectId(comment_id)})
+        response = {'status': True, 'id': comment_id}
     except:
-        response = {'statusDeletePost': False}
+        response = {'status': False, 'id': ''}
     return response
