@@ -7,10 +7,12 @@ from flask_cors import CORS, cross_origin
 from flask_jwt_extended import create_access_token, create_refresh_token, JWTManager, jwt_required, get_jwt_identity
 
 from api.views.cp.cp import api_cp
+from api.views.edit_status import api_edit_status
 from api.views.get_posts import api_get_posts
 from api.views.get_tags import api_get_tags
 from api.views.image import image_blueprint
 from api.views.login import api_login
+from api.views.logout import api_logout
 from api.views.post_rating import api_post_rating
 from api.views.get_user import api_get_user
 from api.views.refresh import api_refresh
@@ -70,20 +72,24 @@ app.register_blueprint(api_edit_comment, url_prefix='/api')
 app.register_blueprint(api_del_сomment, url_prefix='/api')
 # получение юзеров
 app.register_blueprint(api_get_users, url_prefix='/api')
-# получение юзеров
+# по
 app.register_blueprint(api_search, url_prefix='/api')
 # рефреш
 app.register_blueprint(api_refresh, url_prefix='/api')
 # регистрация
 app.register_blueprint(api_registration, url_prefix='/api')
-# логин
+# Log in
 app.register_blueprint(api_login, url_prefix='/api')
+# Log out
+app.register_blueprint(api_logout, url_prefix='/api')
 # загрузка файлов
 app.register_blueprint(file_upload_bp, url_prefix="/api")
 # отдать файл
 app.register_blueprint(image_blueprint, url_prefix="/api")
 # отдать теги
 app.register_blueprint(api_get_tags, url_prefix="/api")
+# изменить текстовый статус пользователя
+app.register_blueprint(api_edit_status, url_prefix="/api")
 #
 # CP
 app.register_blueprint(api_cp, url_prefix="/api")
@@ -96,43 +102,6 @@ app.config['JWT_TOKEN_LOCATION'] = ['cookies', 'headers']
 app.config['JWT_REFRESH_COOKIE_NAME'] = 'token'
 
 jwt = JWTManager(app)  # инициализируем объект JWTManager
-
-
-@app.route('/api/time', methods=['GET'])
-def time():
-    print('time')
-    return 'TIME'
-
-
-@app.route('/api/logout', methods=['GET'])
-@jwt_required(refresh=True)
-def logout():
-    # получаем id юзера из токена 
-    current_user = get_jwt_identity()
-    # затираем токен в бд
-    users_collection.update_one({'id': current_user}, {'$set': {'refresh_token': ''}})
-    response = make_response({'message': 'User logged out successfully'})
-    response.delete_cookie('token')
-    response.set_cookie('token', '', httponly=True,
-                        max_age=30 * 24 * 60 * 60, samesite='None', secure=True, path='/api')
-    return response
-
-
-@app.route('/api/user/<string:user_id>', methods=['POST', 'OPTIONS'])  # исправить передачу айди юзера
-@jwt_required()  # использование декоратора для проверки токена
-def upd_user(user_id):
-    """Change Textststus"""
-
-    # добавить проверку токена, если юзер вышел то нужно запретить отправку нового статуса
-
-    data = request.json
-    status_text = data['statusText']
-    print(f'status_text - {status_text}')
-    print(f'userId - {user_id}')
-    users_collection.update_one(
-        {'_id': ObjectId(user_id)}, {'$set': {'statusText': status_text}})
-    response = {'statusText': status_text}
-    return response
 
 
 @app.after_request

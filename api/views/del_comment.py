@@ -1,11 +1,11 @@
 # удаление комментария
 from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
-
-api_del_сomment = Blueprint('api_del_сomment', __name__)
 # переменные из файла mongo.py
 from mongo import comments_collection
-from bson import json_util, ObjectId
+from bson import ObjectId
+
+api_del_сomment = Blueprint('api_del_сomment', __name__)
 
 
 @api_del_сomment.route('/del_comment', methods=['POST'])
