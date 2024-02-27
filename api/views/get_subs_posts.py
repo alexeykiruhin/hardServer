@@ -67,15 +67,15 @@ def get_subs_posts():
         # исключение поля "_id" из документа автора
         {
             '$project': {
-                'id': 1,
                 'text': 1,
+                'subject': 1,
                 'rating': 1,
                 'img': 1,
                 'author.subscribers': 1,
                 'author.username': 1,
                 'author.img': 1,
                 'author._id': 1,
-                '_id': 0,
+                '_id': 1,
                 'rating': {'result': 1},
                 'tags.tag_name': 1
             }
@@ -85,7 +85,10 @@ def get_subs_posts():
     # выполнение операции агрегации
     result = posts_collection.aggregate(pipeline)
     subs_posts = [post for post in result]
+    print('subs_posts', subs_posts)
     for post in subs_posts:
+        post['id'] = str(post['_id'])
+        del post['_id']
         # author, перобразование _id в строку
         if 'author' in post:
             post['author']['id'] = str(post['author']['_id'])
@@ -95,32 +98,25 @@ def get_subs_posts():
         if 'author' in post:
             post['author']['subscribers'] = [str(p) for p in post['author']['subscribers']]
             print(f'subscribers - {post["author"]["subscribers"]}')
-    # print(f'subs_posts - {subs_posts[0]}')
-    count = posts_collection.aggregate([
-        {
-            "$lookup": {
-                "from": "users",
-                "localField": "author",
-                "foreignField": "_id",
-                "as": "author_doc"
-            }
-        },
-        {
-            "$match": {
-                "author_doc.subscribers": ObjectId(current_user)
-            }
-        },
-        {
-            "$count": "total_posts"
-        }
-    ])
 
-    decoded_doc = [c for c in count]
-    if len(decoded_doc) == 0:
-        response = {'posts': [], 'count': 0}
-    else:
-        decoded_doc = decoded_doc[0]
-        decoded_doc = decoded_doc['total_posts']
-        response = {'posts': subs_posts, 'count': decoded_doc}
-        print(f'response - {response}')
-    return response
+    print('subs_posts2', subs_posts)
+    # print(f'subs_posts - {subs_posts[0]}')
+    # count = posts_collection.aggregate([
+    #     {
+    #         "$lookup": {
+    #             "from": "users",
+    #             "localField": "author",
+    #             "foreignField": "_id",
+    #             "as": "author_doc"
+    #         }
+    #     },
+    #     {
+    #         "$match": {
+    #             "author_doc.subscribers": ObjectId(current_user)
+    #         }
+    #     },
+    #     {
+    #         "$count": "total_posts"
+    #     }
+    # ])
+    return subs_posts

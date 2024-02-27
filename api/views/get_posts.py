@@ -77,8 +77,6 @@ def get_posts():
 
     # выполнение операции агрегации
     result = posts_collection.aggregate(pipeline)
-    # print(posts_collection.find({}))
-    count = posts_collection.count_documents({})
     posts = [post for post in result]
     for post in posts:
         post['id'] = str(post['_id'])
@@ -88,8 +86,4 @@ def get_posts():
         if 'author' in post:
             post['author']['id'] = str(post['author']['_id'])
             del post['author']['_id']
-    # posts['author._id'] = str(posts['author._id'])
-    # response = {'posts': posts, 'count': count}
-    # response.set_cookie('test', 'test', samesite='None', secure=True)
-    # return response
     return posts
